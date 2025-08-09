@@ -13,28 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  duckdb-next-build:
-    name: Build extension binaries
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
-    if: false   # extension-template is currently not compatible with main
-    with:
-      duckdb_version: main
-      ci_tools_version: main
-      extension_name: rapidfuzz
-
   duckdb-stable-build:
     name: Build extension binaries
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.3.2
     with:
-      duckdb_version: v1.3.2
+      duckdb_version: v1.3-ossivalis
       ci_tools_version: v1.3.2
       extension_name: rapidfuzz
-
-  code-quality-check:
-    name: Code Quality Check
-    uses: duckdb/extension-ci-tools/.github/workflows/_extension_code_quality.yml@main
-    with:
-      duckdb_version: v1.3.2
-      ci_tools_version: main
-      extension_name: rapidfuzz
-      format_checks: 'format;tidy'

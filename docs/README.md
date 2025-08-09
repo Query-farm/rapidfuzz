@@ -29,32 +29,62 @@ RapidFuzz provides fast, high-quality algorithms for string similarity and match
 
 This extension exposes several core RapidFuzz algorithms as DuckDB scalar functions:
 
-### `ratio(a, b)`
+### `rapidfuzz_ratio(a, b)`
 - **Returns**: `DOUBLE` (similarity score between 0 and 100)
 - **Description**: Computes the similarity ratio between two strings.
 
 ```sql
-SELECT ratio('hello world', 'helo wrld');
--- Returns: 90.91
+SELECT rapidfuzz_ratio('hello world', 'helo wrld');
+┌─────────────────────────────────────────────┐
+│ rapidfuzz_ratio('hello world', 'helo wrld') │
+│                   double                    │
+├─────────────────────────────────────────────┤
+│                    90.0                     │
+└─────────────────────────────────────────────┘
 ```
 
-### `partial_ratio(a, b)`
+### `rapidfuzz_partial_ratio(a, b)`
 - **Returns**: `DOUBLE`
 - **Description**: Computes the best partial similarity score between substrings of the two inputs.
 
 ```sql
-SELECT partial_ratio('hello world', 'world');
--- Returns: 100.0
+SELECT rapidfuzz_partial_ratio('hello world', 'world');
+┌─────────────────────────────────────────────────┐
+│ rapidfuzz_partial_ratio('hello world', 'world') │
+│                     double                      │
+├─────────────────────────────────────────────────┤
+│                      100.0                      │
+└─────────────────────────────────────────────────┘
 ```
 
-### `token_sort_ratio(a, b)`
+### `rapidfuzz_token_sort_ratio(a, b)`
 - **Returns**: `DOUBLE`
 - **Description**: Compares strings after sorting their tokens (words), useful for matching strings with reordered words.
 
 ```sql
-SELECT token_sort_ratio('world hello', 'hello world');
--- Returns: 100.0
+SELECT rapidfuzz_token_sort_ratio('world hello', 'hello world');
+┌──────────────────────────────────────────────────────────┐
+│ rapidfuzz_token_sort_ratio('world hello', 'hello world') │
+│                          double                          │
+├──────────────────────────────────────────────────────────┤
+│                          100.0                           │
+└──────────────────────────────────────────────────────────┘
 ```
+
+### `rapidfuzz_token_sset_ratio(a, b)`
+- **Returns**: `DOUBLE`
+- **Description**: A similarity metric that compares sets of tokens between two strings, ignoring duplicated words and word order.
+
+```sql
+SELECT rapidfuzz_token_set_ratio('new york new york city', 'new york city');
+┌──────────────────────────────────────────────────────────────────────┐
+│ rapidfuzz_token_set_ratio('new york new york city', 'new york city') │
+│                                double                                │
+├──────────────────────────────────────────────────────────────────────┤
+│                                100.0                                 │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
 
 ## Supported Data Types
 
@@ -65,31 +95,32 @@ All functions support DuckDB `VARCHAR` type. For best results, use with textual 
 ### Basic Similarity
 
 ```sql
-SELECT ratio('database', 'databse');
-SELECT partial_ratio('duckdb extension', 'extension');
-SELECT token_sort_ratio('fuzzy string match', 'string fuzzy match');
+SELECT rapidfuzz_ratio('database', 'databse');
+SELECT rapidfuzz_partial_ratio('duckdb extension', 'extension');
+SELECT rapidfuzz_token_sort_ratio('fuzzy string match', 'string fuzzy match');
+SELECT rapidfuzz_token_set_ratio('fuzzy string match', 'string fuzzy match');
 ```
 
 ### Data Deduplication
 
 ```sql
-SELECT name, ratio(name, 'Jon Smith') AS similarity
+SELECT name, rapidfuzz_ratio(name, 'Jon Smith') AS similarity
 FROM users
-WHERE ratio(name, 'Jon Smith') > 80;
+WHERE rapidfuzz_ratio(name, 'Jon Smith') > 80;
 ```
 
 ### Record Linkage
 
 ```sql
-SELECT a.id, b.id, ratio(a.name, b.name) AS score
+SELECT a.id, b.id, rapidfuzz_ratio(a.name, b.name) AS score
 FROM table_a a
-JOIN table_b b ON ratio(a.name, b.name) > 85;
+JOIN table_b b ON rapidfuzz_ratio(a.name, b.name) > 85;
 ```
 
 ### Search and Autocomplete
 
 ```sql
-SELECT query, candidate, partial_ratio(query, candidate) AS score
+SELECT query, candidate, rapidfuzz_partial_ratio(query, candidate) AS score
 FROM search_candidates
 ORDER BY score DESC
 LIMIT 10;
@@ -97,9 +128,9 @@ LIMIT 10;
 
 ## Algorithm Selection Guide
 
-- **General similarity**: Use `ratio` for overall similarity.
-- **Partial matches**: Use `partial_ratio` for substring matches.
-- **Reordered words**: Use `token_sort_ratio` for strings with the same words in different orders.
+- **General similarity**: Use `rapidfuzz_ratio` for overall similarity.
+- **Partial matches**: Use `rapidfuzz_partial_ratio` for substring matches.
+- **Reordered words**: Use `rapidfuzz_token_sort_ratio` for strings with the same words in different orders.
 
 ## Performance Tips
 

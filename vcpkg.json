@@ -1,6 +1,6 @@
 {
         "dependencies": [
-                "openssl"
+                "rapidfuzz"
         ],
         "vcpkg-configuration": {
                 "overlay-ports": [

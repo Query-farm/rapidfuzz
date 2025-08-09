@@ -1,0 +1,32 @@
+# name: test/sql/rapidfuzz.test
+# description: test rapidfuzz extension
+# group: [sql]
+
+# Before we load the extension, this will fail
+statement error
+SELECT rapidfuzz('Sam');
+----
+Catalog Error: Scalar Function with name rapidfuzz does not exist!
+
+# Require statement will ensure this test is run with this extension loaded
+require rapidfuzz
+
+query R
+select rapidfuzz_ratio('this is a test', 'this is a test!');
+----
+96.55172413793103
+
+query R
+select rapidfuzz_partial_ratio('this is a test', 'this is a test!');
+----
+100
+
+query R
+select rapidfuzz_token_sort_ratio('fuzzy wuzzy was a bear', 'wuzzy fuzzy was a bear');
+----
+100
+
+query R
+select rapidfuzz_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
+----
+100

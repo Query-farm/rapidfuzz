@@ -71,7 +71,7 @@ SELECT rapidfuzz_token_sort_ratio('world hello', 'hello world');
 └──────────────────────────────────────────────────────────┘
 ```
 
-### `rapidfuzz_token_sset_ratio(a, b)`
+### `rapidfuzz_token_set_ratio(a, b)`
 - **Returns**: `DOUBLE`
 - **Description**: A similarity metric that compares sets of tokens between two strings, ignoring duplicated words and word order.
 

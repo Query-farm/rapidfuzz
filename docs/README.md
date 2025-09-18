@@ -142,7 +142,7 @@ SELECT rapidfuzz_token_set_ratio('new york new york city', 'new york city');
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-## Additional Distance and Similarity Functions
+### Distance and Similarity Functions
 
 In addition to the main functions above, the extension provides a wide range of distance, similarity, and normalized functions for various algorithms. For each algorithm, the following function variants are available:
 
@@ -153,7 +153,7 @@ In addition to the main functions above, the extension provides a wide range of 
 
 All functions take two `VARCHAR` arguments and return a `DOUBLE`..
 
-### Algorithm Descriptions
+#### Algorithm Descriptions
 
 - **Jaro**: Measures similarity based on the number and order of matching characters. Good for short strings and typos.
 - **Jaro-Winkler**: Extension of Jaro that gives more weight to common prefixes. Useful for short strings, names, and typos.
@@ -164,7 +164,7 @@ All functions take two `VARCHAR` arguments and return a `DOUBLE`..
 - **OSA (Optimal String Alignment)**: Like Levenshtein, but allows for transpositions of adjacent characters (each substring can be edited only once).
 - **LCS Sequence (Longest Common Subsequence)**: Measures similarity based on the length of the longest common subsequence (not necessarily contiguous).
 
-#### Example Function List
+##### Example Function List
 
 For each algorithm below, the following functions are available:
 
@@ -173,7 +173,7 @@ For each algorithm below, the following functions are available:
 - `rapidfuzz_<algorithm>_normalized_distance(a, b)`
 - `rapidfuzz_<algorithm>_normalized_similarity(a, b)`
 
-##### Jaro
+###### Jaro
 ```sql
 SELECT rapidfuzz_jaro_distance('duck', 'duke');
 SELECT rapidfuzz_jaro_similarity('duck', 'duke');
@@ -181,7 +181,7 @@ SELECT rapidfuzz_jaro_normalized_distance('duck', 'duke');
 SELECT rapidfuzz_jaro_normalized_similarity('duck', 'duke');
 ```
 
-##### Jaro-Winkler
+###### Jaro-Winkler
 ```sql
 SELECT rapidfuzz_jaro_winkler_distance('duck', 'duke');
 SELECT rapidfuzz_jaro_winkler_similarity('duck', 'duke');
@@ -189,7 +189,7 @@ SELECT rapidfuzz_jaro_winkler_normalized_distance('duck', 'duke');
 SELECT rapidfuzz_jaro_winkler_normalized_similarity('duck', 'duke');
 ```
 
-##### Hamming
+###### Hamming
 ```sql
 SELECT rapidfuzz_hamming_distance('karolin', 'kathrin');
 SELECT rapidfuzz_hamming_similarity('karolin', 'kathrin');
@@ -197,7 +197,7 @@ SELECT rapidfuzz_hamming_normalized_distance('karolin', 'kathrin');
 SELECT rapidfuzz_hamming_normalized_similarity('karolin', 'kathrin');
 ```
 
-##### Indel
+###### Indel
 ```sql
 SELECT rapidfuzz_indel_distance('kitten', 'sitting');
 SELECT rapidfuzz_indel_similarity('kitten', 'sitting');
@@ -205,7 +205,7 @@ SELECT rapidfuzz_indel_normalized_distance('kitten', 'sitting');
 SELECT rapidfuzz_indel_normalized_similarity('kitten', 'sitting');
 ```
 
-##### Prefix
+###### Prefix
 ```sql
 SELECT rapidfuzz_prefix_distance('prefix', 'pretext');
 SELECT rapidfuzz_prefix_similarity('prefix', 'pretext');
@@ -213,7 +213,7 @@ SELECT rapidfuzz_prefix_normalized_distance('prefix', 'pretext');
 SELECT rapidfuzz_prefix_normalized_similarity('prefix', 'pretext');
 ```
 
-##### Postfix
+###### Postfix
 ```sql
 SELECT rapidfuzz_postfix_distance('postfix', 'pretext');
 SELECT rapidfuzz_postfix_similarity('postfix', 'pretext');
@@ -221,7 +221,7 @@ SELECT rapidfuzz_postfix_normalized_distance('postfix', 'pretext');
 SELECT rapidfuzz_postfix_normalized_similarity('postfix', 'pretext');
 ```
 
-##### OSA (Optimal String Alignment)
+###### OSA (Optimal String Alignment)
 ```sql
 SELECT rapidfuzz_osa_distance('abcdef', 'azced');
 SELECT rapidfuzz_osa_similarity('abcdef', 'azced');
@@ -229,7 +229,7 @@ SELECT rapidfuzz_osa_normalized_distance('abcdef', 'azced');
 SELECT rapidfuzz_osa_normalized_similarity('abcdef', 'azced');
 ```
 
-##### LCS Sequence
+###### LCS Sequence
 ```sql
 SELECT rapidfuzz_lcs_seq_distance('abcdef', 'acbcf');
 SELECT rapidfuzz_lcs_seq_similarity('abcdef', 'acbcf');

@@ -16,6 +16,7 @@ select rapidfuzz_ratio('this is a test', 'this is a test!');
 ----
 96.55172413793103
 
+
 query R
 select rapidfuzz_partial_ratio('this is a test', 'this is a test!');
 ----
@@ -30,3 +31,177 @@ query R
 select rapidfuzz_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
 ----
 100
+
+
+# Jaro-Winkler function tests
+query R
+select rapidfuzz_jaro_winkler_distance('duck', 'duke');
+----
+0.1333333333333333
+
+query R
+select rapidfuzz_jaro_winkler_similarity('duck', 'duke');
+----
+0.8666666666666667
+
+query R
+select rapidfuzz_jaro_winkler_normalized_distance('duck', 'duke');
+----
+0.1333333333333333
+
+query R
+select rapidfuzz_jaro_winkler_normalized_similarity('duck', 'duke');
+----
+0.8666666666666667
+
+
+# Jaro function tests
+query R
+select rapidfuzz_jaro_distance('duck', 'duke');
+----
+0.16666666666666663
+
+query R
+select rapidfuzz_jaro_similarity('duck', 'duke');
+----
+0.8333333333333334
+
+query R
+select rapidfuzz_jaro_normalized_distance('duck', 'duke');
+----
+0.16666666666666663
+
+query R
+select rapidfuzz_jaro_normalized_similarity('duck', 'duke');
+----
+0.8333333333333334
+
+
+# Hamming distance function tests
+query R
+select rapidfuzz_hamming_distance('karolin', 'kathrin');
+----
+3
+
+query R
+select rapidfuzz_hamming_similarity('karolin', 'kathrin');
+----
+4
+
+query R
+select rapidfuzz_hamming_normalized_distance('karolin', 'kathrin');
+----
+0.42857142857142855
+
+query R
+select rapidfuzz_hamming_normalized_similarity('karolin', 'kathrin');
+----
+0.5714285714285714
+
+
+# Indel function tests
+query R
+select rapidfuzz_indel_distance('kitten', 'sitting');
+----
+5.0
+
+query R
+select rapidfuzz_indel_similarity('kitten', 'sitting');
+----
+8
+
+query R
+select rapidfuzz_indel_normalized_distance('kitten', 'sitting');
+----
+0.38461538461538464
+
+query R
+select rapidfuzz_indel_normalized_similarity('kitten', 'sitting');
+----
+0.6153846153846154
+
+
+# Prefix function tests
+query R
+select rapidfuzz_prefix_distance('prefix', 'pretext');
+----
+4
+
+query R
+select rapidfuzz_prefix_similarity('prefix', 'pretext');
+----
+3
+
+query R
+select rapidfuzz_prefix_normalized_distance('prefix', 'pretext');
+----
+0.5714285714285714
+
+query R
+select rapidfuzz_prefix_normalized_similarity('prefix', 'pretext');
+----
+0.4285714285714286
+
+# Postfix function tests
+query R
+select rapidfuzz_postfix_distance('postfix', 'pretext');
+----
+7
+
+query R
+select rapidfuzz_postfix_similarity('postfix', 'pretext');
+----
+0
+
+query R
+select rapidfuzz_postfix_normalized_distance('postfix', 'pretext');
+----
+1
+
+query R
+select rapidfuzz_postfix_normalized_similarity('postfix', 'pretext');
+----
+0
+
+# LCS_seq function tests
+query R
+select rapidfuzz_lcs_seq_distance('postfix', 'pretext');
+----
+4
+
+query R
+select rapidfuzz_lcs_seq_similarity('postfix', 'pretext');
+----
+3
+
+query R
+select rapidfuzz_lcs_seq_normalized_distance('postfix', 'pretext');
+----
+0.5714285714285714
+
+query R
+select rapidfuzz_lcs_seq_normalized_similarity('postfix', 'pretext');
+----
+0.4285714285714286
+
+# OSA function tests
+query R
+select rapidfuzz_osa_distance('postfix', 'pretext');
+----
+5
+
+query R
+select rapidfuzz_osa_similarity('postfix', 'pretext');
+----
+2
+
+query R
+select rapidfuzz_osa_normalized_distance('postfix', 'pretext');
+----
+0.7142857142857143
+
+query R
+select rapidfuzz_osa_normalized_similarity('postfix', 'pretext');
+----
+0.2857142857142857
+

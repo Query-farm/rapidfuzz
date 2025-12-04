@@ -13,11 +13,14 @@
 #include "rapidfuzz/distance/OSA.hpp"
 #include "rapidfuzz/distance/Prefix.hpp"
 #include "rapidfuzz/distance/Postfix.hpp"
-#include "rapidfuzz/distance/OSA.hpp"
 #include "rapidfuzz/distance/LCSseq.hpp"
+// Note: Levenshtein distance is not included here because DuckDB already provides
+// built-in edit_distance() and levenshtein() functions
 #include "query_farm_telemetry.hpp"
 
 namespace duckdb {
+
+static constexpr const char* RAPIDFUZZ_VERSION = "2025120401";
 
 using rapidfuzz::fuzz::ratio;
 
@@ -172,7 +175,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 	REGISTER_FUN("rapidfuzz_postfix_normalized_distance", RapidFuzzPostfixNormalizedDistanceScalarFun)
 	REGISTER_FUN("rapidfuzz_postfix_normalized_similarity", RapidFuzzPostfixNormalizedSimilarityScalarFun)
 
-	QueryFarmSendTelemetry(loader, "rapidfuzz", "2025091701");
+	QueryFarmSendTelemetry(loader, "rapidfuzz", RAPIDFUZZ_VERSION);
 }
 
 void RapidfuzzExtension::Load(ExtensionLoader &loader) {
@@ -183,7 +186,7 @@ std::string RapidfuzzExtension::Name() {
 }
 
 std::string RapidfuzzExtension::Version() const {
-	return "20205091701";
+	return RAPIDFUZZ_VERSION;
 }
 
 } // namespace duckdb

@@ -85,63 +85,6 @@ SELECT rapidfuzz_token_set_ratio('new york new york city', 'new york city');
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-
-### `rapidfuzz_ratio(a, b)`
-- **Returns**: `DOUBLE` (similarity score between 0 and 100)
-- **Description**: Computes the similarity ratio between two strings.
-
-```sql
-SELECT rapidfuzz_ratio('hello world', 'helo wrld');
-┌─────────────────────────────────────────────┐
-│ rapidfuzz_ratio('hello world', 'helo wrld') │
-│                   double                    │
-├─────────────────────────────────────────────┤
-│                    90.0                     │
-└─────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_partial_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: Computes the best partial similarity score between substrings of the two inputs.
-
-```sql
-SELECT rapidfuzz_partial_ratio('hello world', 'world');
-┌─────────────────────────────────────────────────┐
-│ rapidfuzz_partial_ratio('hello world', 'world') │
-│                     double                      │
-├─────────────────────────────────────────────────┤
-│                      100.0                      │
-└─────────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_token_sort_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: Compares strings after sorting their tokens (words), useful for matching strings with reordered words.
-
-```sql
-SELECT rapidfuzz_token_sort_ratio('world hello', 'hello world');
-┌──────────────────────────────────────────────────────────┐
-│ rapidfuzz_token_sort_ratio('world hello', 'hello world') │
-│                          double                          │
-├──────────────────────────────────────────────────────────┤
-│                          100.0                           │
-└──────────────────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_token_set_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: A similarity metric that compares sets of tokens between two strings, ignoring duplicated words and word order.
-
-```sql
-SELECT rapidfuzz_token_set_ratio('new york new york city', 'new york city');
-┌──────────────────────────────────────────────────────────────────────┐
-│ rapidfuzz_token_set_ratio('new york new york city', 'new york city') │
-│                                double                                │
-├──────────────────────────────────────────────────────────────────────┤
-│                                100.0                                 │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
 ### Distance and Similarity Functions
 
 In addition to the main functions above, the extension provides a wide range of distance, similarity, and normalized functions for various algorithms. For each algorithm, the following function variants are available:
@@ -151,7 +94,7 @@ In addition to the main functions above, the extension provides a wide range of 
 - `<algorithm>_normalized_distance(a, b)`
 - `<algorithm>_normalized_similarity(a, b)`
 
-All functions take two `VARCHAR` arguments and return a `DOUBLE`..
+All functions take two `VARCHAR` arguments and return a `DOUBLE`.
 
 #### Algorithm Descriptions
 

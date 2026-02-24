@@ -85,6 +85,20 @@ SELECT rapidfuzz_token_set_ratio('new york new york city', 'new york city');
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+### `rapidfuzz_partial_token_set_ratio(a, b)`
+- **Returns**: `DOUBLE`
+- **Description**: Compares the words in the strings based on unique and common words between them using a partial ratio (best alignment of the shorter token set in the longer one). Useful when one string may be a subset or partial match of the other. See [RapidFuzz partial_token_set_ratio](https://rapidfuzz.github.io/RapidFuzz/Usage/fuzz.html#partial-token-set-ratio).
+
+```sql
+SELECT rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear')         │
+│                                          double                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                         100.0                                            │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ### Distance and Similarity Functions
 
 In addition to the main functions above, the extension provides a wide range of distance, similarity, and normalized functions for various algorithms. For each algorithm, the following function variants are available:
@@ -193,6 +207,7 @@ SELECT rapidfuzz_ratio('database', 'databse');
 SELECT rapidfuzz_partial_ratio('duckdb extension', 'extension');
 SELECT rapidfuzz_token_sort_ratio('fuzzy string match', 'string fuzzy match');
 SELECT rapidfuzz_token_set_ratio('fuzzy string match', 'string fuzzy match');
+SELECT rapidfuzz_partial_token_set_ratio('fuzzy was a bear but not a dog', 'fuzzy was a bear');
 ```
 
 ### Data Deduplication
@@ -225,6 +240,7 @@ LIMIT 10;
 - **General similarity**: Use `rapidfuzz_ratio` for overall similarity.
 - **Partial matches**: Use `rapidfuzz_partial_ratio` for substring matches.
 - **Reordered words**: Use `rapidfuzz_token_sort_ratio` for strings with the same words in different orders.
+- **Token sets (subset/partial)**: Use `rapidfuzz_token_set_ratio` for sets of words ignoring duplicates and order; use `rapidfuzz_partial_token_set_ratio` when one string may be a subset or partial token-set match of the other.
 
 ## Performance Tips
 

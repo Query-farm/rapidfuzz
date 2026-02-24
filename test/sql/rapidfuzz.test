@@ -32,6 +32,15 @@ select rapidfuzz_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
 ----
 100
 
+query R
+select rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
+----
+100
+
+query R
+select rapidfuzz_partial_token_set_ratio('fuzzy was a bear but not a dog', 'fuzzy was a bear');
+----
+100
 
 # Jaro-Winkler function tests
 query R

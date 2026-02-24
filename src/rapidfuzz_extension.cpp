@@ -56,6 +56,16 @@ inline void RapidFuzzTokenSetRatioScalarFun(DataChunk &args, ExpressionState &st
 	    [&](string_t a, string_t b) { return rapidfuzz::fuzz::token_set_ratio(a.GetString(), b.GetString()); });
 }
 
+inline void RapidFuzzPartialTokenSetRatioScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
+	auto &a_vector = args.data[0];
+	auto &b_vector = args.data[1];
+	BinaryExecutor::Execute<string_t, string_t, double>(
+	    a_vector, b_vector, result, args.size(),
+	    [&](string_t a, string_t b) {
+		    return rapidfuzz::fuzz::partial_token_set_ratio(a.GetString(), b.GetString());
+	    });
+}
+
 #define RAPIDFUZZ_SCALAR_FUN(name, fn)                                                                                 \
 	inline void name(DataChunk &args, ExpressionState &state, Vector &result) {                                        \
 		auto &a_vector = args.data[0];                                                                                 \
@@ -129,6 +139,11 @@ static void LoadInternal(ExtensionLoader &loader) {
 	    ScalarFunction("rapidfuzz_token_set_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::DOUBLE,
 	                   RapidFuzzTokenSetRatioScalarFun);
 	loader.RegisterFunction(rapidfuzz_token_set_ratio_scalar_function);
+
+	auto rapidfuzz_partial_token_set_ratio_scalar_function =
+	    ScalarFunction("rapidfuzz_partial_token_set_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR},
+	                   LogicalType::DOUBLE, RapidFuzzPartialTokenSetRatioScalarFun);
+	loader.RegisterFunction(rapidfuzz_partial_token_set_ratio_scalar_function);
 
 	REGISTER_FUN("rapidfuzz_jaro_winkler_distance", RapidFuzzJaroWinklerDistanceScalarFun)
 	REGISTER_FUN("rapidfuzz_jaro_winkler_similarity", RapidFuzzJaroWinklerSimilarityScalarFun)

@@ -1,253 +1,28 @@
+<p align="center">
+  <a href="https://query.farm">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://query.farm/media-kit/logo/wordmark-dark.svg">
+      <img alt="Query.Farm" src="https://query.farm/media-kit/logo/wordmark-light.svg" height="64">
+    </picture>
+  </a>
+</p>
+
 # RapidFuzz Extension for DuckDB
+
+[![DuckDB](https://img.shields.io/badge/DuckDB-community_extension-fdf1e0?logo=duckdb&logoColor=fff000)](https://duckdb.org/community_extensions/extensions/rapidfuzz.html)
+[![v1.5 build](https://github.com/Query-farm/rapidfuzz/actions/workflows/MainDistributionPipeline.yml/badge.svg?branch=v1.5)](https://github.com/Query-farm/rapidfuzz/actions/workflows/MainDistributionPipeline.yml?query=branch%3Av1.5)
 
 This `rapidfuzz` extension adds high-performance fuzzy string matching and string edit distance functions to DuckDB, powered by the RapidFuzz C++ library.
 
+## Documentation
+
+Full documentation, including installation, usage, the function reference, and cookbook examples, is available at:
+
+**[https://query.farm/products/extensions/rapidfuzz](https://query.farm/products/extensions/rapidfuzz)**
+
 ## Installation
-
-**`rapidfuzz` is a [DuckDB Community Extension](https://github.com/duckdb/community-extensions).**
-
-You can use it in DuckDB SQL:
 
 ```sql
 install rapidfuzz from community;
 load rapidfuzz;
 ```
-
-## What is Fuzzy String Matching?
-
-Fuzzy string matching allows you to compare strings and measure their similarity, even when they are not exactly the same. This is useful for:
-
-- Data cleaning and deduplication
-- Record linkage
-- Search and autocomplete
-- Spell checking
-
-RapidFuzz provides fast, high-quality algorithms for string similarity and matching.
-
-## Available Functions
-
-
-This extension exposes several core RapidFuzz algorithms as DuckDB scalar functions:
-
-### `rapidfuzz_ratio(a, b)`
-- **Returns**: `DOUBLE` (similarity score between 0 and 100)
-- **Description**: Computes the similarity ratio between two strings.
-
-```sql
-SELECT rapidfuzz_ratio('hello world', 'helo wrld');
-┌─────────────────────────────────────────────┐
-│ rapidfuzz_ratio('hello world', 'helo wrld') │
-│                   double                    │
-├─────────────────────────────────────────────┤
-│                    90.0                     │
-└─────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_partial_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: Computes the best partial similarity score between substrings of the two inputs.
-
-```sql
-SELECT rapidfuzz_partial_ratio('hello world', 'world');
-┌─────────────────────────────────────────────────┐
-│ rapidfuzz_partial_ratio('hello world', 'world') │
-│                     double                      │
-├─────────────────────────────────────────────────┤
-│                      100.0                      │
-└─────────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_token_sort_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: Compares strings after sorting their tokens (words), useful for matching strings with reordered words.
-
-```sql
-SELECT rapidfuzz_token_sort_ratio('world hello', 'hello world');
-┌──────────────────────────────────────────────────────────┐
-│ rapidfuzz_token_sort_ratio('world hello', 'hello world') │
-│                          double                          │
-├──────────────────────────────────────────────────────────┤
-│                          100.0                           │
-└──────────────────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_token_set_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: A similarity metric that compares sets of tokens between two strings, ignoring duplicated words and word order.
-
-```sql
-SELECT rapidfuzz_token_set_ratio('new york new york city', 'new york city');
-┌──────────────────────────────────────────────────────────────────────┐
-│ rapidfuzz_token_set_ratio('new york new york city', 'new york city') │
-│                                double                                │
-├──────────────────────────────────────────────────────────────────────┤
-│                                100.0                                 │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-### `rapidfuzz_partial_token_set_ratio(a, b)`
-- **Returns**: `DOUBLE`
-- **Description**: Compares the words in the strings based on unique and common words between them using a partial ratio (best alignment of the shorter token set in the longer one). Useful when one string may be a subset or partial match of the other. See [RapidFuzz partial_token_set_ratio](https://rapidfuzz.github.io/RapidFuzz/Usage/fuzz.html#partial-token-set-ratio).
-
-```sql
-SELECT rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│ rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear')         │
-│                                          double                                          │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│                                         100.0                                            │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Distance and Similarity Functions
-
-In addition to the main functions above, the extension provides a wide range of distance, similarity, and normalized functions for various algorithms. For each algorithm, the following function variants are available:
-
-- `<algorithm>_distance(a, b)`
-- `<algorithm>_similarity(a, b)`
-- `<algorithm>_normalized_distance(a, b)`
-- `<algorithm>_normalized_similarity(a, b)`
-
-All functions take two `VARCHAR` arguments and return a `DOUBLE`.
-
-#### Algorithm Descriptions
-
-- **Jaro**: Measures similarity based on the number and order of matching characters. Good for short strings and typos.
-- **Jaro-Winkler**: Extension of Jaro that gives more weight to common prefixes. Useful for short strings, names, and typos.
-- **Hamming**: Counts the number of differing characters at the same positions. Only defined for strings of equal length.
-- **Indel**: Measures the minimum number of insertions and deletions to transform one string into another (no substitutions).
-- **Prefix**: Measures the edit distance/similarity considering only prefixes of the strings.
-- **Postfix**: Measures the edit distance/similarity considering only postfixes (suffixes) of the strings.
-- **OSA (Optimal String Alignment)**: Like Levenshtein, but allows for transpositions of adjacent characters (each substring can be edited only once).
-- **LCS Sequence (Longest Common Subsequence)**: Measures similarity based on the length of the longest common subsequence (not necessarily contiguous).
-
-##### Example Function List
-
-For each algorithm below, the following functions are available:
-
-- `rapidfuzz_<algorithm>_distance(a, b)`
-- `rapidfuzz_<algorithm>_similarity(a, b)`
-- `rapidfuzz_<algorithm>_normalized_distance(a, b)`
-- `rapidfuzz_<algorithm>_normalized_similarity(a, b)`
-
-###### Jaro
-```sql
-SELECT rapidfuzz_jaro_distance('duck', 'duke');
-SELECT rapidfuzz_jaro_similarity('duck', 'duke');
-SELECT rapidfuzz_jaro_normalized_distance('duck', 'duke');
-SELECT rapidfuzz_jaro_normalized_similarity('duck', 'duke');
-```
-
-###### Jaro-Winkler
-```sql
-SELECT rapidfuzz_jaro_winkler_distance('duck', 'duke');
-SELECT rapidfuzz_jaro_winkler_similarity('duck', 'duke');
-SELECT rapidfuzz_jaro_winkler_normalized_distance('duck', 'duke');
-SELECT rapidfuzz_jaro_winkler_normalized_similarity('duck', 'duke');
-```
-
-###### Hamming
-```sql
-SELECT rapidfuzz_hamming_distance('karolin', 'kathrin');
-SELECT rapidfuzz_hamming_similarity('karolin', 'kathrin');
-SELECT rapidfuzz_hamming_normalized_distance('karolin', 'kathrin');
-SELECT rapidfuzz_hamming_normalized_similarity('karolin', 'kathrin');
-```
-
-###### Indel
-```sql
-SELECT rapidfuzz_indel_distance('kitten', 'sitting');
-SELECT rapidfuzz_indel_similarity('kitten', 'sitting');
-SELECT rapidfuzz_indel_normalized_distance('kitten', 'sitting');
-SELECT rapidfuzz_indel_normalized_similarity('kitten', 'sitting');
-```
-
-###### Prefix
-```sql
-SELECT rapidfuzz_prefix_distance('prefix', 'pretext');
-SELECT rapidfuzz_prefix_similarity('prefix', 'pretext');
-SELECT rapidfuzz_prefix_normalized_distance('prefix', 'pretext');
-SELECT rapidfuzz_prefix_normalized_similarity('prefix', 'pretext');
-```
-
-###### Postfix
-```sql
-SELECT rapidfuzz_postfix_distance('postfix', 'pretext');
-SELECT rapidfuzz_postfix_similarity('postfix', 'pretext');
-SELECT rapidfuzz_postfix_normalized_distance('postfix', 'pretext');
-SELECT rapidfuzz_postfix_normalized_similarity('postfix', 'pretext');
-```
-
-###### OSA (Optimal String Alignment)
-```sql
-SELECT rapidfuzz_osa_distance('abcdef', 'azced');
-SELECT rapidfuzz_osa_similarity('abcdef', 'azced');
-SELECT rapidfuzz_osa_normalized_distance('abcdef', 'azced');
-SELECT rapidfuzz_osa_normalized_similarity('abcdef', 'azced');
-```
-
-###### LCS Sequence
-```sql
-SELECT rapidfuzz_lcs_seq_distance('abcdef', 'acbcf');
-SELECT rapidfuzz_lcs_seq_similarity('abcdef', 'acbcf');
-SELECT rapidfuzz_lcs_seq_normalized_distance('abcdef', 'acbcf');
-SELECT rapidfuzz_lcs_seq_normalized_similarity('abcdef', 'acbcf');
-```
-
-## Supported Data Types
-
-All functions support DuckDB `VARCHAR` type. For best results, use with textual data.
-
-## Usage Examples
-
-### Basic Similarity
-
-```sql
-SELECT rapidfuzz_ratio('database', 'databse');
-SELECT rapidfuzz_partial_ratio('duckdb extension', 'extension');
-SELECT rapidfuzz_token_sort_ratio('fuzzy string match', 'string fuzzy match');
-SELECT rapidfuzz_token_set_ratio('fuzzy string match', 'string fuzzy match');
-SELECT rapidfuzz_partial_token_set_ratio('fuzzy was a bear but not a dog', 'fuzzy was a bear');
-```
-
-### Data Deduplication
-
-```sql
-SELECT name, rapidfuzz_ratio(name, 'Jon Smith') AS similarity
-FROM users
-WHERE rapidfuzz_ratio(name, 'Jon Smith') > 80;
-```
-
-### Record Linkage
-
-```sql
-SELECT a.id, b.id, rapidfuzz_ratio(a.name, b.name) AS score
-FROM table_a a
-JOIN table_b b ON rapidfuzz_ratio(a.name, b.name) > 85;
-```
-
-### Search and Autocomplete
-
-```sql
-SELECT query, candidate, rapidfuzz_partial_ratio(query, candidate) AS score
-FROM search_candidates
-ORDER BY score DESC
-LIMIT 10;
-```
-
-## Algorithm Selection Guide
-
-- **General similarity**: Use `rapidfuzz_ratio` for overall similarity.
-- **Partial matches**: Use `rapidfuzz_partial_ratio` for substring matches.
-- **Reordered words**: Use `rapidfuzz_token_sort_ratio` for strings with the same words in different orders.
-- **Token sets (subset/partial)**: Use `rapidfuzz_token_set_ratio` for sets of words ignoring duplicates and order; use `rapidfuzz_partial_token_set_ratio` when one string may be a subset or partial token-set match of the other.
-
-## Performance Tips
-
-1. RapidFuzz algorithms are highly optimized for speed and accuracy.
-2. For large datasets, use WHERE clauses to filter by similarity threshold.
-3. Preprocess your data (e.g., lowercase, trim) for best results.
-
-## License
-
-MIT Licensed

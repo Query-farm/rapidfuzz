@@ -20,7 +20,7 @@
 
 namespace duckdb {
 
-static constexpr const char* RAPIDFUZZ_VERSION = "2026072501";
+static constexpr const char* RAPIDFUZZ_VERSION = "2026102001";
 
 using rapidfuzz::fuzz::ratio;
 

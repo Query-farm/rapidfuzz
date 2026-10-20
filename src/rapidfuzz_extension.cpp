@@ -27,43 +27,41 @@ using rapidfuzz::fuzz::ratio;
 inline void RapidFuzzRatioScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &a_vector = args.data[0];
 	auto &b_vector = args.data[1];
-	BinaryExecutor::Execute<string_t, string_t, double>(
-	    a_vector, b_vector, result, args.size(),
-	    [&](string_t a, string_t b) { return rapidfuzz::fuzz::ratio(a.GetString(), b.GetString()); });
+	BinaryExecutor::Execute<string_t, string_t, double>(a_vector, b_vector, result, [&](string_t a, string_t b) {
+		return rapidfuzz::fuzz::ratio(a.GetString(), b.GetString());
+	});
 }
 
 inline void RapidFuzzPartialRatioScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &a_vector = args.data[0];
 	auto &b_vector = args.data[1];
-	BinaryExecutor::Execute<string_t, string_t, double>(
-	    a_vector, b_vector, result, args.size(),
-	    [&](string_t a, string_t b) { return rapidfuzz::fuzz::partial_ratio(a.GetString(), b.GetString()); });
+	BinaryExecutor::Execute<string_t, string_t, double>(a_vector, b_vector, result, [&](string_t a, string_t b) {
+		return rapidfuzz::fuzz::partial_ratio(a.GetString(), b.GetString());
+	});
 }
 
 inline void RapidFuzzTokenSortRatioScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &a_vector = args.data[0];
 	auto &b_vector = args.data[1];
-	BinaryExecutor::Execute<string_t, string_t, double>(
-	    a_vector, b_vector, result, args.size(),
-	    [&](string_t a, string_t b) { return rapidfuzz::fuzz::token_sort_ratio(a.GetString(), b.GetString()); });
+	BinaryExecutor::Execute<string_t, string_t, double>(a_vector, b_vector, result, [&](string_t a, string_t b) {
+		return rapidfuzz::fuzz::token_sort_ratio(a.GetString(), b.GetString());
+	});
 }
 
 inline void RapidFuzzTokenSetRatioScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &a_vector = args.data[0];
 	auto &b_vector = args.data[1];
-	BinaryExecutor::Execute<string_t, string_t, double>(
-	    a_vector, b_vector, result, args.size(),
-	    [&](string_t a, string_t b) { return rapidfuzz::fuzz::token_set_ratio(a.GetString(), b.GetString()); });
+	BinaryExecutor::Execute<string_t, string_t, double>(a_vector, b_vector, result, [&](string_t a, string_t b) {
+		return rapidfuzz::fuzz::token_set_ratio(a.GetString(), b.GetString());
+	});
 }
 
 inline void RapidFuzzPartialTokenSetRatioScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
 	auto &a_vector = args.data[0];
 	auto &b_vector = args.data[1];
-	BinaryExecutor::Execute<string_t, string_t, double>(
-	    a_vector, b_vector, result, args.size(),
-	    [&](string_t a, string_t b) {
-		    return rapidfuzz::fuzz::partial_token_set_ratio(a.GetString(), b.GetString());
-	    });
+	BinaryExecutor::Execute<string_t, string_t, double>(a_vector, b_vector, result, [&](string_t a, string_t b) {
+		return rapidfuzz::fuzz::partial_token_set_ratio(a.GetString(), b.GetString());
+	});
 }
 
 #define RAPIDFUZZ_SCALAR_FUN(name, fn)                                                                                 \
@@ -71,8 +69,7 @@ inline void RapidFuzzPartialTokenSetRatioScalarFun(DataChunk &args, ExpressionSt
 		auto &a_vector = args.data[0];                                                                                 \
 		auto &b_vector = args.data[1];                                                                                 \
 		BinaryExecutor::Execute<string_t, string_t, double>(                                                           \
-		    a_vector, b_vector, result, args.size(),                                                                   \
-		    [&](string_t a, string_t b) { return fn(a.GetString(), b.GetString()); });                                 \
+		    a_vector, b_vector, result, [&](string_t a, string_t b) { return fn(a.GetString(), b.GetString()); });     \
 	}
 
 RAPIDFUZZ_SCALAR_FUN(RapidFuzzJaroWinklerDistanceScalarFun, rapidfuzz::jaro_winkler_distance)

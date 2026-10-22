@@ -20,7 +20,12 @@
 
 namespace duckdb {
 
-static constexpr const char* RAPIDFUZZ_VERSION = "2026102001";
+static constexpr const char* RAPIDFUZZ_VERSION = "2026102101";
+
+// A named parameter that is still passed by position only, so calls work as before.
+static FunctionParameter Positional(const char *name, LogicalType type) {
+	return FunctionParameter(name, std::move(type), {}, FunctionParameterKind::POSITIONAL_ONLY);
+}
 
 using rapidfuzz::fuzz::ratio;
 
@@ -114,31 +119,31 @@ RAPIDFUZZ_SCALAR_FUN(RapidFuzzPostfixNormalizedSimilarityScalarFun, rapidfuzz::p
 
 #define REGISTER_FUN(name, fun)                                                                                        \
 	loader.RegisterFunction(                                                                                           \
-	    ScalarFunction(name, {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::DOUBLE, fun));
+	    ScalarFunction(name, {Positional("s1", LogicalType::VARCHAR), Positional("s2", LogicalType::VARCHAR)}, LogicalType::DOUBLE, fun));
 
 static void LoadInternal(ExtensionLoader &loader) {
 	// Register a scalar function
 	auto rapidfuzz_ratio_scalar_function = ScalarFunction(
-	    "rapidfuzz_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::DOUBLE, RapidFuzzRatioScalarFun);
+	    "rapidfuzz_ratio", {Positional("s1", LogicalType::VARCHAR), Positional("s2", LogicalType::VARCHAR)}, LogicalType::DOUBLE, RapidFuzzRatioScalarFun);
 	loader.RegisterFunction(rapidfuzz_ratio_scalar_function);
 
 	auto rapidfuzz_partial_ratio_scalar_function =
-	    ScalarFunction("rapidfuzz_partial_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::DOUBLE,
+	    ScalarFunction("rapidfuzz_partial_ratio", {Positional("s1", LogicalType::VARCHAR), Positional("s2", LogicalType::VARCHAR)}, LogicalType::DOUBLE,
 	                   RapidFuzzPartialRatioScalarFun);
 	loader.RegisterFunction(rapidfuzz_partial_ratio_scalar_function);
 
 	auto rapidfuzz_token_sort_ratio_scalar_function =
-	    ScalarFunction("rapidfuzz_token_sort_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::DOUBLE,
+	    ScalarFunction("rapidfuzz_token_sort_ratio", {Positional("s1", LogicalType::VARCHAR), Positional("s2", LogicalType::VARCHAR)}, LogicalType::DOUBLE,
 	                   RapidFuzzTokenSortRatioScalarFun);
 	loader.RegisterFunction(rapidfuzz_token_sort_ratio_scalar_function);
 
 	auto rapidfuzz_token_set_ratio_scalar_function =
-	    ScalarFunction("rapidfuzz_token_set_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::DOUBLE,
+	    ScalarFunction("rapidfuzz_token_set_ratio", {Positional("s1", LogicalType::VARCHAR), Positional("s2", LogicalType::VARCHAR)}, LogicalType::DOUBLE,
 	                   RapidFuzzTokenSetRatioScalarFun);
 	loader.RegisterFunction(rapidfuzz_token_set_ratio_scalar_function);
 
 	auto rapidfuzz_partial_token_set_ratio_scalar_function =
-	    ScalarFunction("rapidfuzz_partial_token_set_ratio", {LogicalType::VARCHAR, LogicalType::VARCHAR},
+	    ScalarFunction("rapidfuzz_partial_token_set_ratio", {Positional("s1", LogicalType::VARCHAR), Positional("s2", LogicalType::VARCHAR)},
 	                   LogicalType::DOUBLE, RapidFuzzPartialTokenSetRatioScalarFun);
 	loader.RegisterFunction(rapidfuzz_partial_token_set_ratio_scalar_function);
 

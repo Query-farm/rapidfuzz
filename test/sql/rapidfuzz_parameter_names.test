@@ -49,7 +49,7 @@ rapidfuzz_token_sort_ratio	[s1, s2]
 
 query I
 SELECT count(*) FROM duckdb_functions()
-WHERE function_name LIKE 'rapidfuzz_%' AND list_contains(list_transform(parameters, p -> p LIKE 'col%'), true);
+WHERE function_name LIKE 'rapidfuzz_%' AND len(list_filter(parameters, lambda p: p SIMILAR TO 'col[0-9]+')) > 0;
 ----
 0
 

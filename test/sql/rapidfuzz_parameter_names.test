@@ -5,7 +5,7 @@
 require rapidfuzz
 
 query TT
-SELECT DISTINCT function_name, parameters FROM duckdb_functions()
+SELECT function_name, parameters FROM duckdb_functions()
 WHERE function_name LIKE 'rapidfuzz_%'
 ORDER BY function_name;
 ----
@@ -46,6 +46,22 @@ rapidfuzz_prefix_similarity	[s1, s2]
 rapidfuzz_ratio	[s1, s2]
 rapidfuzz_token_set_ratio	[s1, s2]
 rapidfuzz_token_sort_ratio	[s1, s2]
+
+# each rapidfuzz function is registered exactly once per signature
+query I
+SELECT count(*) FROM (
+	SELECT function_name, parameter_types, count(*) AS n FROM duckdb_functions()
+	WHERE function_name LIKE 'rapidfuzz_%'
+	GROUP BY ALL
+) WHERE n <> 1;
+----
+0
+
+query I
+SELECT count(*) FROM duckdb_functions()
+WHERE function_name LIKE 'rapidfuzz_%';
+----
+37
 
 query I
 SELECT count(*) FROM duckdb_functions()

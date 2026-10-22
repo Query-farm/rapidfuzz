@@ -20,7 +20,7 @@
 
 namespace duckdb {
 
-static constexpr const char* RAPIDFUZZ_VERSION = "2026102101";
+static constexpr const char* RAPIDFUZZ_VERSION = "2026102102";
 
 // A named parameter that is still passed by position only, so calls work as before.
 static FunctionParameter Positional(const char *name, LogicalType type) {
@@ -166,11 +166,6 @@ static void LoadInternal(ExtensionLoader &loader) {
 	REGISTER_FUN("rapidfuzz_lcs_seq_similarity", RapidFuzzLCSseqSimilarityScalarFun)
 	REGISTER_FUN("rapidfuzz_lcs_seq_normalized_distance", RapidFuzzLCSseqNormalizedDistanceScalarFun)
 	REGISTER_FUN("rapidfuzz_lcs_seq_normalized_similarity", RapidFuzzLCSseqNormalizedSimilarityScalarFun)
-
-	REGISTER_FUN("rapidfuzz_hamming_distance", RapidFuzzHammingDistanceScalarFun)
-	REGISTER_FUN("rapidfuzz_hamming_similarity", RapidFuzzHammingSimilarityScalarFun)
-	REGISTER_FUN("rapidfuzz_hamming_normalized_distance", RapidFuzzHammingNormalizedDistanceScalarFun)
-	REGISTER_FUN("rapidfuzz_hamming_normalized_similarity", RapidFuzzHammingNormalizedSimilarityScalarFun)
 
 	REGISTER_FUN("rapidfuzz_indel_distance", RapidFuzzIndelDistanceScalarFun)
 	REGISTER_FUN("rapidfuzz_indel_similarity", RapidFuzzIndelSimilarityScalarFun)

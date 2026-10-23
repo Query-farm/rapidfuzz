@@ -9,20 +9,13 @@
 
 # RapidFuzz Extension for DuckDB
 
-[![DuckDB](https://img.shields.io/badge/DuckDB-community_extension-fdf1e0?logo=duckdb&logoColor=fff000)](https://duckdb.org/community_extensions/extensions/rapidfuzz.html)
-[![v1.5 build](https://github.com/Query-farm/rapidfuzz/actions/workflows/MainDistributionPipeline.yml/badge.svg?branch=v1.5)](https://github.com/Query-farm/rapidfuzz/actions/workflows/MainDistributionPipeline.yml?query=branch%3Av1.5)
+[![DuckDB](https://img.shields.io/badge/DuckDB-extension-fdf1e0?logo=duckdb&logoColor=fff000)](https://query.farm/products/extensions/rapidfuzz/)
+[![v2.0 build](https://github.com/Query-farm/rapidfuzz/actions/workflows/MainDistributionPipeline.yml/badge.svg?branch=v2.0)](https://github.com/Query-farm/rapidfuzz/actions/workflows/MainDistributionPipeline.yml?query=branch%3Av2.0)
 
-This `rapidfuzz` extension adds high-performance fuzzy string matching and string edit distance functions to DuckDB, powered by the RapidFuzz C++ library.
+Compare strings with fuzzy matching and edit-distance functions in DuckDB using RapidFuzz.
 
 ## Documentation
 
 Full documentation, including installation, usage, the function reference, and cookbook examples, is available at:
 
-**[https://query.farm/products/extensions/rapidfuzz](https://query.farm/products/extensions/rapidfuzz)**
-
-## Installation
-
-```sql
-install rapidfuzz from community;
-load rapidfuzz;
-```
+**[https://query.farm/products/extensions/rapidfuzz/](https://query.farm/products/extensions/rapidfuzz/)**

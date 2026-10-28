@@ -1,0 +1,208 @@
+# name: test/sql/rapidfuzz_options.test
+# description: score_cutoff and the per-metric keyword options
+# group: [sql]
+
+require rapidfuzz
+
+#
+# score_cutoff
+#
+
+# distances above the cutoff are returned as cutoff + 1
+query III
+SELECT rapidfuzz_levenshtein_distance('kitten', 'sitting', score_cutoff := 1),
+       rapidfuzz_levenshtein_distance('kitten', 'sitting', score_cutoff := 3),
+       rapidfuzz_levenshtein_distance('kitten', 'sitting', score_cutoff := 0);
+----
+2	3	1
+
+# similarities below the cutoff are returned as 0
+query II
+SELECT rapidfuzz_levenshtein_similarity('kitten', 'sitting', score_cutoff := 5),
+       rapidfuzz_levenshtein_similarity('kitten', 'sitting', score_cutoff := 4);
+----
+0	4
+
+# normalized distances above the cutoff are returned as 1, normalized similarities below it as 0
+query RRRR
+SELECT rapidfuzz_levenshtein_normalized_distance('kitten', 'sitting', score_cutoff := 0.4),
+       rapidfuzz_levenshtein_normalized_distance('kitten', 'sitting', score_cutoff := 0.5),
+       rapidfuzz_levenshtein_normalized_similarity('kitten', 'sitting', score_cutoff := 0.6),
+       rapidfuzz_levenshtein_normalized_similarity('kitten', 'sitting', score_cutoff := 0.5);
+----
+1.0	0.42857142857142855	0.0	0.5714285714285714
+
+query RR
+SELECT rapidfuzz_ratio('this is a test', 'this is a test!', score_cutoff := 97),
+       rapidfuzz_ratio('this is a test', 'this is a test!', score_cutoff := 96);
+----
+0.0	96.55172413793103
+
+query RR
+SELECT rapidfuzz_jaro_winkler_distance('duck', 'duke', score_cutoff := 0.1),
+       rapidfuzz_jaro_winkler_similarity('duck', 'duke', score_cutoff := 0.9);
+----
+1.0	0.0
+
+# a NULL cutoff means no cutoff
+query IR
+SELECT rapidfuzz_levenshtein_distance('kitten', 'sitting', score_cutoff := NULL),
+       rapidfuzz_ratio('kitten', 'sitting', score_cutoff := NULL);
+----
+3	61.53846153846154
+
+# the cutoff is applied in filters
+statement ok
+CREATE TABLE names AS SELECT * FROM (VALUES ('Jonathan'), ('Johnathan'), ('Jonathon'), ('Nathan'), ('Joan')) t(name);
+
+query T
+SELECT name FROM names WHERE rapidfuzz_levenshtein_distance(name, 'Jonathan', score_cutoff := 1) <= 1 ORDER BY name;
+----
+Johnathan
+Jonathan
+Jonathon
+
+statement error
+SELECT rapidfuzz_ratio('a', 'b', score_cutoff := 101);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_ratio: score_cutoff must be between 0 and 100, got 101.*
+
+statement error
+SELECT rapidfuzz_ratio('a', 'b', score_cutoff := -1);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_ratio: score_cutoff must be between 0 and 100.*
+
+statement error
+SELECT rapidfuzz_levenshtein_normalized_distance('a', 'b', score_cutoff := 1.5);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_levenshtein_normalized_distance: score_cutoff must be between 0 and 1.*
+
+statement error
+SELECT rapidfuzz_levenshtein_distance('a', 'b', score_cutoff := -1);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_levenshtein_distance: score_cutoff must not be negative, got -1.*
+
+statement error
+SELECT rapidfuzz_ratio('a', 'b', score_cutoff := 'nan'::DOUBLE);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_ratio: score_cutoff must be between 0 and 100.*
+
+# options are keyword-only
+statement error
+SELECT rapidfuzz_ratio('a', 'b', 50);
+----
+<REGEX>:Binder Error: No function matches.*
+
+# options must be constant
+statement error
+SELECT rapidfuzz_ratio(name, 'x', score_cutoff := length(name)) FROM names;
+----
+<REGEX>:.*score_cutoff.*
+
+statement error
+SELECT rapidfuzz_ratio('a', 'b', unknown_option := 1);
+----
+<REGEX>:Binder Error:.*
+
+#
+# Levenshtein weights
+#
+
+query III
+SELECT rapidfuzz_levenshtein_distance('kitten', 'sitting', replace_cost := 2),
+       rapidfuzz_levenshtein_similarity('kitten', 'sitting', replace_cost := 2),
+       rapidfuzz_levenshtein_distance('kitten', 'sitting', insert_cost := 1, delete_cost := 1, replace_cost := 1);
+----
+5	8	3
+
+query RR
+SELECT rapidfuzz_levenshtein_normalized_distance('kitten', 'sitting', replace_cost := 2),
+       rapidfuzz_levenshtein_normalized_similarity('kitten', 'sitting', replace_cost := 2);
+----
+0.38461538461538464	0.6153846153846154
+
+# insertions and deletions weigh differently, so the argument order matters
+query II
+SELECT rapidfuzz_levenshtein_distance('abc', 'abcdef', delete_cost := 3),
+       rapidfuzz_levenshtein_distance('abcdef', 'abc', delete_cost := 3);
+----
+3	9
+
+# the same holds when either argument is a constant (the cached path)
+statement ok
+CREATE TABLE prefixes AS SELECT * FROM (VALUES ('abc'), ('abcdef')) t(s);
+
+query TII
+SELECT s, rapidfuzz_levenshtein_distance(s, 'abcdef', delete_cost := 3),
+       rapidfuzz_levenshtein_distance('abcdef', s, delete_cost := 3)
+FROM prefixes ORDER BY s;
+----
+abc	3	9
+abcdef	0	0
+
+query IR
+SELECT rapidfuzz_levenshtein_distance('abc', 'xyz', insert_cost := 0, delete_cost := 0, replace_cost := 0),
+       rapidfuzz_levenshtein_normalized_distance('abc', 'xyz', insert_cost := 0, delete_cost := 0, replace_cost := 0);
+----
+0	0.0
+
+statement error
+SELECT rapidfuzz_levenshtein_distance('a', 'b', insert_cost := -1);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_levenshtein_distance: insert_cost must not be negative, got -1.*
+
+statement error
+SELECT rapidfuzz_levenshtein_distance('a', 'b', replace_cost := NULL);
+----
+<REGEX>:.*replace_cost.*
+
+#
+# Hamming padding
+#
+
+query IR
+SELECT rapidfuzz_hamming_distance('abc', 'abcde'), rapidfuzz_hamming_normalized_distance('abc', 'abcde');
+----
+2	0.4
+
+query I
+SELECT rapidfuzz_hamming_distance('karolin', 'kathrin', pad := false);
+----
+3
+
+statement error
+SELECT rapidfuzz_hamming_distance('abc', 'abcde', pad := false);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_hamming_distance: with pad := false both strings must have the same length, got 3 and 5 characters.*
+
+statement error
+SELECT rapidfuzz_hamming_similarity(s, 'abc', pad := false) FROM prefixes;
+----
+<REGEX>:Invalid Input Error: rapidfuzz_hamming_similarity: with pad := false both strings must have the same length.*
+
+#
+# Jaro-Winkler prefix weight
+#
+
+query RRR
+SELECT rapidfuzz_jaro_winkler_similarity('martha', 'marhta', prefix_weight := 0),
+       rapidfuzz_jaro_winkler_similarity('martha', 'marhta'),
+       rapidfuzz_jaro_winkler_similarity('martha', 'marhta', prefix_weight := 0.25);
+----
+0.9444444444444445	0.9611111111111111	0.9861111111111112
+
+# without the prefix bonus Jaro-Winkler is Jaro
+query R
+SELECT rapidfuzz_jaro_similarity('martha', 'marhta');
+----
+0.9444444444444445
+
+statement error
+SELECT rapidfuzz_jaro_winkler_similarity('a', 'b', prefix_weight := 0.3);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_jaro_winkler_similarity: prefix_weight must be between 0 and 0.25, got 0.3.*
+
+statement error
+SELECT rapidfuzz_jaro_winkler_similarity('a', 'b', prefix_weight := -0.1);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_jaro_winkler_similarity: prefix_weight must be between 0 and 0.25.*

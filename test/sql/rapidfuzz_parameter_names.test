@@ -1,5 +1,5 @@
 # name: test/sql/rapidfuzz_parameter_names.test
-# description: duckdb_functions() reports the real parameter names, and calls stay positional
+# description: duckdb_functions() reports the parameter names, documentation and catalog of the extension
 # group: [sql]
 
 require rapidfuzz
@@ -9,43 +9,63 @@ SELECT function_name, parameters FROM duckdb_functions()
 WHERE function_name LIKE 'rapidfuzz_%'
 ORDER BY function_name;
 ----
-rapidfuzz_hamming_distance	[s1, s2]
-rapidfuzz_hamming_normalized_distance	[s1, s2]
-rapidfuzz_hamming_normalized_similarity	[s1, s2]
-rapidfuzz_hamming_similarity	[s1, s2]
-rapidfuzz_indel_distance	[s1, s2]
-rapidfuzz_indel_normalized_distance	[s1, s2]
-rapidfuzz_indel_normalized_similarity	[s1, s2]
-rapidfuzz_indel_similarity	[s1, s2]
-rapidfuzz_jaro_distance	[s1, s2]
-rapidfuzz_jaro_normalized_distance	[s1, s2]
-rapidfuzz_jaro_normalized_similarity	[s1, s2]
-rapidfuzz_jaro_similarity	[s1, s2]
-rapidfuzz_jaro_winkler_distance	[s1, s2]
-rapidfuzz_jaro_winkler_normalized_distance	[s1, s2]
-rapidfuzz_jaro_winkler_normalized_similarity	[s1, s2]
-rapidfuzz_jaro_winkler_similarity	[s1, s2]
-rapidfuzz_lcs_seq_distance	[s1, s2]
-rapidfuzz_lcs_seq_normalized_distance	[s1, s2]
-rapidfuzz_lcs_seq_normalized_similarity	[s1, s2]
-rapidfuzz_lcs_seq_similarity	[s1, s2]
-rapidfuzz_osa_distance	[s1, s2]
-rapidfuzz_osa_normalized_distance	[s1, s2]
-rapidfuzz_osa_normalized_similarity	[s1, s2]
-rapidfuzz_osa_similarity	[s1, s2]
-rapidfuzz_partial_ratio	[s1, s2]
-rapidfuzz_partial_token_set_ratio	[s1, s2]
-rapidfuzz_postfix_distance	[s1, s2]
-rapidfuzz_postfix_normalized_distance	[s1, s2]
-rapidfuzz_postfix_normalized_similarity	[s1, s2]
-rapidfuzz_postfix_similarity	[s1, s2]
-rapidfuzz_prefix_distance	[s1, s2]
-rapidfuzz_prefix_normalized_distance	[s1, s2]
-rapidfuzz_prefix_normalized_similarity	[s1, s2]
-rapidfuzz_prefix_similarity	[s1, s2]
-rapidfuzz_ratio	[s1, s2]
-rapidfuzz_token_set_ratio	[s1, s2]
-rapidfuzz_token_sort_ratio	[s1, s2]
+rapidfuzz_damerau_levenshtein_distance	[s1, s2, score_cutoff]
+rapidfuzz_damerau_levenshtein_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_damerau_levenshtein_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_damerau_levenshtein_similarity	[s1, s2, score_cutoff]
+rapidfuzz_extract	[query, choices, scorer, top_k, score_cutoff]
+rapidfuzz_extract_one	[query, choices, scorer, score_cutoff]
+rapidfuzz_hamming_distance	[s1, s2, pad, score_cutoff]
+rapidfuzz_hamming_normalized_distance	[s1, s2, pad, score_cutoff]
+rapidfuzz_hamming_normalized_similarity	[s1, s2, pad, score_cutoff]
+rapidfuzz_hamming_similarity	[s1, s2, pad, score_cutoff]
+rapidfuzz_indel_distance	[s1, s2, score_cutoff]
+rapidfuzz_indel_editops	[s1, s2]
+rapidfuzz_indel_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_indel_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_indel_opcodes	[s1, s2]
+rapidfuzz_indel_similarity	[s1, s2, score_cutoff]
+rapidfuzz_jaro_distance	[s1, s2, score_cutoff]
+rapidfuzz_jaro_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_jaro_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_jaro_similarity	[s1, s2, score_cutoff]
+rapidfuzz_jaro_winkler_distance	[s1, s2, prefix_weight, score_cutoff]
+rapidfuzz_jaro_winkler_normalized_distance	[s1, s2, prefix_weight, score_cutoff]
+rapidfuzz_jaro_winkler_normalized_similarity	[s1, s2, prefix_weight, score_cutoff]
+rapidfuzz_jaro_winkler_similarity	[s1, s2, prefix_weight, score_cutoff]
+rapidfuzz_lcs_seq_distance	[s1, s2, score_cutoff]
+rapidfuzz_lcs_seq_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_lcs_seq_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_lcs_seq_similarity	[s1, s2, score_cutoff]
+rapidfuzz_levenshtein_distance	[s1, s2, insert_cost, delete_cost, replace_cost, score_cutoff]
+rapidfuzz_levenshtein_editops	[s1, s2]
+rapidfuzz_levenshtein_normalized_distance	[s1, s2, insert_cost, delete_cost, replace_cost, score_cutoff]
+rapidfuzz_levenshtein_normalized_similarity	[s1, s2, insert_cost, delete_cost, replace_cost, score_cutoff]
+rapidfuzz_levenshtein_opcodes	[s1, s2]
+rapidfuzz_levenshtein_similarity	[s1, s2, insert_cost, delete_cost, replace_cost, score_cutoff]
+rapidfuzz_osa_distance	[s1, s2, score_cutoff]
+rapidfuzz_osa_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_osa_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_osa_similarity	[s1, s2, score_cutoff]
+rapidfuzz_partial_ratio	[s1, s2, score_cutoff]
+rapidfuzz_partial_ratio_alignment	[s1, s2]
+rapidfuzz_partial_token_ratio	[s1, s2, score_cutoff]
+rapidfuzz_partial_token_set_ratio	[s1, s2, score_cutoff]
+rapidfuzz_partial_token_sort_ratio	[s1, s2, score_cutoff]
+rapidfuzz_postfix_distance	[s1, s2, score_cutoff]
+rapidfuzz_postfix_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_postfix_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_postfix_similarity	[s1, s2, score_cutoff]
+rapidfuzz_prefix_distance	[s1, s2, score_cutoff]
+rapidfuzz_prefix_normalized_distance	[s1, s2, score_cutoff]
+rapidfuzz_prefix_normalized_similarity	[s1, s2, score_cutoff]
+rapidfuzz_prefix_similarity	[s1, s2, score_cutoff]
+rapidfuzz_qratio	[s1, s2, score_cutoff]
+rapidfuzz_ratio	[s1, s2, score_cutoff]
+rapidfuzz_token_ratio	[s1, s2, score_cutoff]
+rapidfuzz_token_set_ratio	[s1, s2, score_cutoff]
+rapidfuzz_token_sort_ratio	[s1, s2, score_cutoff]
+rapidfuzz_wratio	[s1, s2, score_cutoff]
 
 # each rapidfuzz function is registered exactly once per signature
 query I
@@ -61,7 +81,7 @@ query I
 SELECT count(*) FROM duckdb_functions()
 WHERE function_name LIKE 'rapidfuzz_%';
 ----
-37
+57
 
 query I
 SELECT count(*) FROM duckdb_functions()
@@ -73,3 +93,18 @@ query R
 SELECT rapidfuzz_ratio('this is a test', 'this is a test!');
 ----
 96.55172413793103
+
+# every function is documented for duckdb_functions() and the generated website reference
+query I
+SELECT count(*) FROM duckdb_functions()
+WHERE function_name LIKE 'rapidfuzz_%'
+  AND (coalesce(description, '') = '' OR len(examples) = 0 OR NOT list_contains(categories, 'text_similarity'));
+----
+0
+
+# the documented examples start with the function they document
+query I
+SELECT count(*) FROM duckdb_functions()
+WHERE function_name LIKE 'rapidfuzz_%' AND NOT starts_with(examples[1], function_name || '(');
+----
+0

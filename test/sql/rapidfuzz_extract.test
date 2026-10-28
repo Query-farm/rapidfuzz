@@ -1,0 +1,121 @@
+# name: test/sql/rapidfuzz_extract.test
+# description: rapidfuzz_extract and rapidfuzz_extract_one rank choices like Python's rapidfuzz.process
+# group: [sql]
+
+require rapidfuzz
+
+query T
+SELECT rapidfuzz_extract('new york jets', ['New York Jets', 'New York Giants', 'Dallas Cowboys'],
+                         scorer := 'token_sort_ratio', top_k := 2);
+----
+[{'choice': New York Jets, 'score': 76.92307692307692, 'choice_index': 1}, {'choice': New York Giants, 'score': 64.28571428571428, 'choice_index': 2}]
+
+# WRatio by default, at most 5 matches (top_k)
+query T
+SELECT rapidfuzz_extract('cowboys', ['New York Jets', 'New York Giants', 'Dallas Cowboys']);
+----
+[{'choice': Dallas Cowboys, 'score': 83.07692307692308, 'choice_index': 3}, {'choice': New York Jets, 'score': 30.000000000000004, 'choice_index': 1}, {'choice': New York Giants, 'score': 27.692307692307693, 'choice_index': 2}]
+
+query T
+SELECT rapidfuzz_extract_one('cowboys', ['New York Jets', 'New York Giants', 'Dallas Cowboys']);
+----
+{'choice': Dallas Cowboys, 'score': 83.07692307692308, 'choice_index': 3}
+
+# NULL choices are skipped but keep their position; top_k := NULL returns every match
+query T
+SELECT rapidfuzz_extract('café', ['cafe', NULL, 'caffè', 'café', 'tea'], scorer := 'levenshtein_normalized_similarity',
+                         top_k := NULL);
+----
+[{'choice': café, 'score': 1.0, 'choice_index': 4}, {'choice': cafe, 'score': 0.75, 'choice_index': 1}, {'choice': caffè, 'score': 0.6, 'choice_index': 3}, {'choice': tea, 'score': 0.0, 'choice_index': 5}]
+
+query T
+SELECT rapidfuzz_extract('martha', ['marhta', 'martha', 'mart'], scorer := 'jaro_winkler_normalized_similarity',
+                         top_k := 2);
+----
+[{'choice': martha, 'score': 1.0, 'choice_index': 2}, {'choice': marhta, 'score': 0.9611111111111111, 'choice_index': 1}]
+
+# ties keep the order of the choices
+query T
+SELECT rapidfuzz_extract('aaa', ['aab', 'aba', 'baa'], scorer := 'ratio');
+----
+[{'choice': aab, 'score': 66.66666666666667, 'choice_index': 1}, {'choice': aba, 'score': 66.66666666666667, 'choice_index': 2}, {'choice': baa, 'score': 66.66666666666667, 'choice_index': 3}]
+
+# score_cutoff drops weak matches; extract_one returns NULL when nothing qualifies
+query TT
+SELECT rapidfuzz_extract('new york', ['New York Jets', 'New York Giants', 'Dallas Cowboys'], score_cutoff := 80),
+       rapidfuzz_extract_one('zzz', ['New York Jets', 'New York Giants', 'Dallas Cowboys'], score_cutoff := 50);
+----
+[]	NULL
+
+query T
+SELECT rapidfuzz_extract('cowboys', ['New York Jets', 'New York Giants', 'Dallas Cowboys'], score_cutoff := 50);
+----
+[{'choice': Dallas Cowboys, 'score': 83.07692307692308, 'choice_index': 3}]
+
+# scorer names are case-insensitive
+query R
+SELECT rapidfuzz_extract_one('cowboys', ['Dallas Cowboys'], scorer := 'WRatio').score;
+----
+83.07692307692308
+
+# the index points back into the list
+query T
+SELECT list_extract(c, rapidfuzz_extract_one('giants', c).choice_index)
+FROM (SELECT ['New York Jets', 'New York Giants', 'Dallas Cowboys'] AS c);
+----
+New York Giants
+
+# NULL and empty inputs
+query TTTT
+SELECT rapidfuzz_extract(NULL, ['a']), rapidfuzz_extract('a', NULL), rapidfuzz_extract('a', []),
+       rapidfuzz_extract_one('a', [NULL]);
+----
+NULL	NULL	[]	NULL
+
+# per-row queries and choice lists, including a constant list
+statement ok
+CREATE TABLE teams AS SELECT * FROM (VALUES ('jets', 1), ('giants', 2), ('cowboys', 3), (NULL, 4)) t(query, id);
+
+query IT
+SELECT id, rapidfuzz_extract_one(query, ['New York Jets', 'New York Giants', 'Dallas Cowboys'],
+                                 scorer := 'partial_ratio').choice
+FROM teams ORDER BY id;
+----
+1	New York Jets
+2	New York Giants
+3	Dallas Cowboys
+4	NULL
+
+query IT
+SELECT id, rapidfuzz_extract(query, list_value(query, upper(query), 'other'), scorer := 'ratio', top_k := 1)[1].choice_index
+FROM teams ORDER BY id;
+----
+1	1
+2	1
+3	1
+4	NULL
+
+query TT
+SELECT typeof(rapidfuzz_extract('a', ['b'])), typeof(rapidfuzz_extract_one('a', ['b']));
+----
+STRUCT(choice VARCHAR, score DOUBLE, choice_index BIGINT)[]	STRUCT(choice VARCHAR, score DOUBLE, choice_index BIGINT)
+
+statement error
+SELECT rapidfuzz_extract('a', ['b'], scorer := 'levenshtein_distance');
+----
+<REGEX>:Invalid Input Error: rapidfuzz_extract: unknown scorer 'levenshtein_distance', expected one of:.*wratio.*
+
+statement error
+SELECT rapidfuzz_extract('a', ['b'], top_k := 0);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_extract: top_k must be at least 1, got 0.*
+
+statement error
+SELECT rapidfuzz_extract('a', ['b'], scorer := 'levenshtein_normalized_similarity', score_cutoff := 2);
+----
+<REGEX>:Invalid Input Error: rapidfuzz_extract: score_cutoff for scorer 'levenshtein_normalized_similarity' must be between 0 and 1, got 2.*
+
+statement error
+SELECT rapidfuzz_extract_one('a', ['b'], top_k := 2);
+----
+<REGEX>:Binder Error:.*

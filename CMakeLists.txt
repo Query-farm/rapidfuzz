@@ -3,9 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 # Set extension name here
 set(TARGET_NAME rapidfuzz)
 
-# DuckDB's extension distribution supports vcpkg. As such, dependencies can be added in ./vcpkg.json and then
-# used in cmake with find_package. Feel free to remove or replace with other dependencies.
-# Note that it should also be removed from vcpkg.json to prevent needlessly installing it..
+# rapidfuzz-cpp is installed by vcpkg from the version pinned in vcpkg_ports/rapidfuzz-cpp
 find_package(rapidfuzz CONFIG REQUIRED)
 
 set(EXTENSION_NAME ${TARGET_NAME}_extension)
@@ -15,8 +13,13 @@ project(${TARGET_NAME})
 include_directories(src/include)
 
 set(EXTENSION_SOURCES
-src/rapidfuzz_extension.cpp
-src/query_farm_telemetry.cpp)
+    src/rapidfuzz_extension.cpp
+    src/rapidfuzz_characters.cpp
+    src/rapidfuzz_fuzz_functions.cpp
+    src/rapidfuzz_distance_functions.cpp
+    src/rapidfuzz_alignment_functions.cpp
+    src/rapidfuzz_extract_functions.cpp
+    src/query_farm_telemetry.cpp)
 
 build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})

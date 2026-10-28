@@ -1,0 +1,99 @@
+# name: test/sql/rapidfuzz_cached.test
+# description: Scoring against a constant (the cached path) gives the same results as scoring two columns
+# group: [sql]
+
+require rapidfuzz
+
+# ASCII and non-ASCII strings with spaces (for the token scorers) of lengths 0 to 69, plus NULLs
+statement ok
+CREATE TABLE pairs AS
+SELECT CASE WHEN i % 97 = 0 THEN NULL
+            ELSE replace(replace(replace(substr(repeat(md5(i::VARCHAR), 3), 1, i % 70), '0', ' '), 'a', 'é'), 'b', '日')
+       END AS a,
+       -- two alternating patterns so that p is never scanned as a constant vector
+       CASE WHEN i % 2 = 0 THEN 'é日 3f c0ffee 42' ELSE 'plain ascii 0123' END AS p
+FROM range(2000) t(i);
+
+# the inputs exercise a wide range of scores, so the comparisons below are not vacuous
+query II
+SELECT count(DISTINCT rapidfuzz_ratio(a, p)) > 100, count(DISTINCT rapidfuzz_levenshtein_distance(a, p)) > 30 FROM pairs;
+----
+true	true
+
+foreach fn rapidfuzz_ratio rapidfuzz_partial_ratio rapidfuzz_token_sort_ratio rapidfuzz_partial_token_sort_ratio rapidfuzz_token_set_ratio rapidfuzz_partial_token_set_ratio rapidfuzz_token_ratio rapidfuzz_partial_token_ratio rapidfuzz_wratio rapidfuzz_qratio rapidfuzz_levenshtein_distance rapidfuzz_levenshtein_similarity rapidfuzz_levenshtein_normalized_distance rapidfuzz_levenshtein_normalized_similarity rapidfuzz_damerau_levenshtein_distance rapidfuzz_damerau_levenshtein_similarity rapidfuzz_damerau_levenshtein_normalized_distance rapidfuzz_damerau_levenshtein_normalized_similarity rapidfuzz_osa_distance rapidfuzz_osa_similarity rapidfuzz_osa_normalized_distance rapidfuzz_osa_normalized_similarity rapidfuzz_indel_distance rapidfuzz_indel_similarity rapidfuzz_indel_normalized_distance rapidfuzz_indel_normalized_similarity rapidfuzz_lcs_seq_distance rapidfuzz_lcs_seq_similarity rapidfuzz_lcs_seq_normalized_distance rapidfuzz_lcs_seq_normalized_similarity rapidfuzz_hamming_distance rapidfuzz_hamming_similarity rapidfuzz_hamming_normalized_distance rapidfuzz_hamming_normalized_similarity rapidfuzz_jaro_distance rapidfuzz_jaro_similarity rapidfuzz_jaro_normalized_distance rapidfuzz_jaro_normalized_similarity rapidfuzz_jaro_winkler_distance rapidfuzz_jaro_winkler_similarity rapidfuzz_jaro_winkler_normalized_distance rapidfuzz_jaro_winkler_normalized_similarity rapidfuzz_prefix_distance rapidfuzz_prefix_similarity rapidfuzz_prefix_normalized_distance rapidfuzz_prefix_normalized_similarity rapidfuzz_postfix_distance rapidfuzz_postfix_similarity rapidfuzz_postfix_normalized_distance rapidfuzz_postfix_normalized_similarity
+
+query I
+SELECT count(*) FROM pairs
+WHERE ${fn}(a, p) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN ${fn}(a, 'plain ascii 0123') ELSE ${fn}(a, 'é日 3f c0ffee 42') END;
+----
+0
+
+query I
+SELECT count(*) FROM pairs
+WHERE ${fn}(p, a) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN ${fn}('plain ascii 0123', a) ELSE ${fn}('é日 3f c0ffee 42', a) END;
+----
+0
+
+endloop
+
+# the cutoff gives the same early-exit results on both paths
+foreach fn rapidfuzz_levenshtein_distance rapidfuzz_levenshtein_similarity rapidfuzz_damerau_levenshtein_distance rapidfuzz_damerau_levenshtein_similarity rapidfuzz_osa_distance rapidfuzz_osa_similarity rapidfuzz_indel_distance rapidfuzz_indel_similarity rapidfuzz_lcs_seq_distance rapidfuzz_lcs_seq_similarity rapidfuzz_hamming_distance rapidfuzz_hamming_similarity rapidfuzz_prefix_distance rapidfuzz_prefix_similarity rapidfuzz_postfix_distance rapidfuzz_postfix_similarity
+
+query I
+SELECT count(*) FROM pairs
+WHERE ${fn}(a, p, score_cutoff := 2) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN ${fn}(a, 'plain ascii 0123', score_cutoff := 2)
+           ELSE ${fn}(a, 'é日 3f c0ffee 42', score_cutoff := 2) END;
+----
+0
+
+endloop
+
+foreach fn rapidfuzz_ratio rapidfuzz_partial_ratio rapidfuzz_token_sort_ratio rapidfuzz_partial_token_sort_ratio rapidfuzz_token_set_ratio rapidfuzz_partial_token_set_ratio rapidfuzz_token_ratio rapidfuzz_partial_token_ratio rapidfuzz_wratio rapidfuzz_qratio rapidfuzz_levenshtein_normalized_distance rapidfuzz_levenshtein_normalized_similarity rapidfuzz_damerau_levenshtein_normalized_distance rapidfuzz_damerau_levenshtein_normalized_similarity rapidfuzz_osa_normalized_distance rapidfuzz_osa_normalized_similarity rapidfuzz_indel_normalized_distance rapidfuzz_indel_normalized_similarity rapidfuzz_lcs_seq_normalized_distance rapidfuzz_lcs_seq_normalized_similarity rapidfuzz_hamming_normalized_distance rapidfuzz_hamming_normalized_similarity rapidfuzz_prefix_normalized_distance rapidfuzz_prefix_normalized_similarity rapidfuzz_postfix_normalized_distance rapidfuzz_postfix_normalized_similarity rapidfuzz_jaro_distance rapidfuzz_jaro_similarity rapidfuzz_jaro_normalized_distance rapidfuzz_jaro_normalized_similarity rapidfuzz_jaro_winkler_distance rapidfuzz_jaro_winkler_similarity rapidfuzz_jaro_winkler_normalized_distance rapidfuzz_jaro_winkler_normalized_similarity
+
+query I
+SELECT count(*) FROM pairs
+WHERE ${fn}(a, p, score_cutoff := 0.5) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN ${fn}(a, 'plain ascii 0123', score_cutoff := 0.5)
+           ELSE ${fn}(a, 'é日 3f c0ffee 42', score_cutoff := 0.5) END;
+----
+0
+
+endloop
+
+# options are mirrored when the constant is the first argument
+foreach fn rapidfuzz_levenshtein_distance rapidfuzz_levenshtein_similarity rapidfuzz_levenshtein_normalized_distance rapidfuzz_levenshtein_normalized_similarity
+
+query I
+SELECT count(*) FROM pairs
+WHERE ${fn}(p, a, insert_cost := 1, delete_cost := 3, replace_cost := 2) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN ${fn}('plain ascii 0123', a, insert_cost := 1, delete_cost := 3, replace_cost := 2)
+           ELSE ${fn}('é日 3f c0ffee 42', a, insert_cost := 1, delete_cost := 3, replace_cost := 2) END;
+----
+0
+
+query I
+SELECT count(*) FROM pairs
+WHERE ${fn}(a, p, insert_cost := 1, delete_cost := 3, replace_cost := 2) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN ${fn}(a, 'plain ascii 0123', insert_cost := 1, delete_cost := 3, replace_cost := 2)
+           ELSE ${fn}(a, 'é日 3f c0ffee 42', insert_cost := 1, delete_cost := 3, replace_cost := 2) END;
+----
+0
+
+endloop
+
+query I
+SELECT count(*) FROM pairs
+WHERE rapidfuzz_jaro_winkler_similarity(p, a, prefix_weight := 0.2) IS DISTINCT FROM
+      CASE WHEN p = 'plain ascii 0123' THEN rapidfuzz_jaro_winkler_similarity('plain ascii 0123', a, prefix_weight := 0.2)
+           ELSE rapidfuzz_jaro_winkler_similarity('é日 3f c0ffee 42', a, prefix_weight := 0.2) END;
+----
+0
+
+# a NULL constant yields NULL for every row
+query I
+SELECT count(*) FROM pairs WHERE rapidfuzz_ratio(a, NULL) IS NOT NULL OR rapidfuzz_levenshtein_distance(NULL, a) IS NOT NULL;
+----
+0

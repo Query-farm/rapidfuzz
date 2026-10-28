@@ -1,216 +1,180 @@
 # name: test/sql/rapidfuzz.test
-# description: test rapidfuzz extension
+# description: Scores of every rapidfuzz scorer on reference inputs
 # group: [sql]
 
 # Before we load the extension, this will fail
 statement error
-SELECT rapidfuzz('Sam');
+SELECT rapidfuzz_ratio('a', 'b');
 ----
-Catalog Error: Scalar Function with name rapidfuzz does not exist!
+Catalog Error: Scalar Function with name rapidfuzz_ratio does not exist!
 
-# Require statement will ensure this test is run with this extension loaded
 require rapidfuzz
 
+#
+# rapidfuzz.fuzz ratios (DOUBLE, 0 - 100)
+#
+
 query R
-select rapidfuzz_ratio('this is a test', 'this is a test!');
+SELECT rapidfuzz_ratio('this is a test', 'this is a test!');
 ----
 96.55172413793103
 
+query R
+SELECT rapidfuzz_partial_ratio('this is a test', 'this is a test!');
+----
+100.0
 
 query R
-select rapidfuzz_partial_ratio('this is a test', 'this is a test!');
+SELECT rapidfuzz_token_sort_ratio('fuzzy wuzzy was a bear', 'wuzzy fuzzy was a bear');
 ----
-100
+100.0
 
 query R
-select rapidfuzz_token_sort_ratio('fuzzy wuzzy was a bear', 'wuzzy fuzzy was a bear');
+SELECT rapidfuzz_partial_token_sort_ratio('fuzzy was a bear', 'wuzzy fuzzy was a bear');
 ----
-100
+100.0
 
 query R
-select rapidfuzz_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
+SELECT rapidfuzz_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
 ----
-100
+100.0
 
 query R
-select rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
+SELECT rapidfuzz_partial_token_set_ratio('fuzzy was a bear', 'fuzzy fuzzy was a bear');
 ----
-100
+100.0
 
 query R
-select rapidfuzz_partial_token_set_ratio('fuzzy was a bear but not a dog', 'fuzzy was a bear');
+SELECT rapidfuzz_partial_token_set_ratio('fuzzy was a bear but not a dog', 'fuzzy was a bear');
 ----
-100
-
-# Jaro-Winkler function tests
-query R
-select rapidfuzz_jaro_winkler_distance('duck', 'duke');
-----
-0.1333333333333333
+100.0
 
 query R
-select rapidfuzz_jaro_winkler_similarity('duck', 'duke');
+SELECT rapidfuzz_token_ratio('fuzzy was a bear', 'wuzzy fuzzy was a bear');
 ----
-0.8666666666666667
+100.0
 
 query R
-select rapidfuzz_jaro_winkler_normalized_distance('duck', 'duke');
+SELECT rapidfuzz_partial_token_ratio('fuzzy was a bear', 'wuzzy fuzzy was a bear');
 ----
-0.1333333333333333
+100.0
 
 query R
-select rapidfuzz_jaro_winkler_normalized_similarity('duck', 'duke');
+SELECT rapidfuzz_wratio('this is a test', 'this is a new test!!!');
 ----
-0.8666666666666667
+85.5
 
-
-# Jaro function tests
-query R
-select rapidfuzz_jaro_distance('duck', 'duke');
+# QRatio scores empty strings as 0, ratio as 100
+query RRR
+SELECT rapidfuzz_qratio('this is a test', 'this is a new test!!!'), rapidfuzz_qratio('', ''), rapidfuzz_ratio('', '');
 ----
-0.16666666666666663
+80.0	0.0	100.0
 
-query R
-select rapidfuzz_jaro_similarity('duck', 'duke');
+#
+# Distance families: distance, similarity, normalized_distance, normalized_similarity
+#
+
+query IIRR
+SELECT rapidfuzz_levenshtein_distance('kitten', 'sitting'), rapidfuzz_levenshtein_similarity('kitten', 'sitting'),
+       rapidfuzz_levenshtein_normalized_distance('kitten', 'sitting'),
+       rapidfuzz_levenshtein_normalized_similarity('kitten', 'sitting');
 ----
-0.8333333333333334
+3	4	0.42857142857142855	0.5714285714285714
 
-query R
-select rapidfuzz_jaro_normalized_distance('duck', 'duke');
+query IIRR
+SELECT rapidfuzz_damerau_levenshtein_distance('ca', 'abc'), rapidfuzz_damerau_levenshtein_similarity('ca', 'abc'),
+       rapidfuzz_damerau_levenshtein_normalized_distance('ca', 'abc'),
+       rapidfuzz_damerau_levenshtein_normalized_similarity('ca', 'abc');
 ----
-0.16666666666666663
+2	1	0.6666666666666666	0.33333333333333337
 
-query R
-select rapidfuzz_jaro_normalized_similarity('duck', 'duke');
+# OSA cannot edit a transposed pair again, so it needs one more edit than Damerau-Levenshtein here
+query IIRR
+SELECT rapidfuzz_osa_distance('ca', 'abc'), rapidfuzz_osa_similarity('ca', 'abc'),
+       rapidfuzz_osa_normalized_distance('ca', 'abc'), rapidfuzz_osa_normalized_similarity('ca', 'abc');
 ----
-0.8333333333333334
+3	0	1.0	0.0
 
-
-# Hamming distance function tests
-query R
-select rapidfuzz_hamming_distance('karolin', 'kathrin');
+query IIRR
+SELECT rapidfuzz_osa_distance('postfix', 'pretext'), rapidfuzz_osa_similarity('postfix', 'pretext'),
+       rapidfuzz_osa_normalized_distance('postfix', 'pretext'), rapidfuzz_osa_normalized_similarity('postfix', 'pretext');
 ----
-3
+5	2	0.7142857142857143	0.2857142857142857
 
-query R
-select rapidfuzz_hamming_similarity('karolin', 'kathrin');
+query IIRR
+SELECT rapidfuzz_indel_distance('kitten', 'sitting'), rapidfuzz_indel_similarity('kitten', 'sitting'),
+       rapidfuzz_indel_normalized_distance('kitten', 'sitting'), rapidfuzz_indel_normalized_similarity('kitten', 'sitting');
 ----
-4
+5	8	0.38461538461538464	0.6153846153846154
 
-query R
-select rapidfuzz_hamming_normalized_distance('karolin', 'kathrin');
+query IIRR
+SELECT rapidfuzz_lcs_seq_distance('postfix', 'pretext'), rapidfuzz_lcs_seq_similarity('postfix', 'pretext'),
+       rapidfuzz_lcs_seq_normalized_distance('postfix', 'pretext'),
+       rapidfuzz_lcs_seq_normalized_similarity('postfix', 'pretext');
 ----
-0.42857142857142855
+4	3	0.5714285714285714	0.4285714285714286
 
-query R
-select rapidfuzz_hamming_normalized_similarity('karolin', 'kathrin');
+query IIRR
+SELECT rapidfuzz_hamming_distance('karolin', 'kathrin'), rapidfuzz_hamming_similarity('karolin', 'kathrin'),
+       rapidfuzz_hamming_normalized_distance('karolin', 'kathrin'),
+       rapidfuzz_hamming_normalized_similarity('karolin', 'kathrin');
 ----
-0.5714285714285714
+3	4	0.42857142857142855	0.5714285714285714
 
-
-# Indel function tests
-query R
-select rapidfuzz_indel_distance('kitten', 'sitting');
+query RRRR
+SELECT rapidfuzz_jaro_distance('duck', 'duke'), rapidfuzz_jaro_similarity('duck', 'duke'),
+       rapidfuzz_jaro_normalized_distance('duck', 'duke'), rapidfuzz_jaro_normalized_similarity('duck', 'duke');
 ----
-5.0
+0.16666666666666663	0.8333333333333334	0.16666666666666663	0.8333333333333334
 
-query R
-select rapidfuzz_indel_similarity('kitten', 'sitting');
+query RRRR
+SELECT rapidfuzz_jaro_winkler_distance('duck', 'duke'), rapidfuzz_jaro_winkler_similarity('duck', 'duke'),
+       rapidfuzz_jaro_winkler_normalized_distance('duck', 'duke'),
+       rapidfuzz_jaro_winkler_normalized_similarity('duck', 'duke');
 ----
-8
+0.1333333333333333	0.8666666666666667	0.1333333333333333	0.8666666666666667
 
-query R
-select rapidfuzz_indel_normalized_distance('kitten', 'sitting');
+query IIRR
+SELECT rapidfuzz_prefix_distance('prefix', 'pretext'), rapidfuzz_prefix_similarity('prefix', 'pretext'),
+       rapidfuzz_prefix_normalized_distance('prefix', 'pretext'), rapidfuzz_prefix_normalized_similarity('prefix', 'pretext');
 ----
-0.38461538461538464
+4	3	0.5714285714285714	0.4285714285714286
 
-query R
-select rapidfuzz_indel_normalized_similarity('kitten', 'sitting');
+query IIRR
+SELECT rapidfuzz_postfix_distance('postfix', 'pretext'), rapidfuzz_postfix_similarity('postfix', 'pretext'),
+       rapidfuzz_postfix_normalized_distance('postfix', 'pretext'), rapidfuzz_postfix_normalized_similarity('postfix', 'pretext');
 ----
-0.6153846153846154
+7	0	1.0	0.0
 
+#
+# Return types: character counts are BIGINT, everything else DOUBLE
+#
 
-# Prefix function tests
-query R
-select rapidfuzz_prefix_distance('prefix', 'pretext');
+query TTTTT
+SELECT typeof(rapidfuzz_ratio('a', 'b')), typeof(rapidfuzz_levenshtein_distance('a', 'b')),
+       typeof(rapidfuzz_levenshtein_similarity('a', 'b')), typeof(rapidfuzz_levenshtein_normalized_distance('a', 'b')),
+       typeof(rapidfuzz_jaro_winkler_distance('a', 'b'));
 ----
-4
+DOUBLE	BIGINT	BIGINT	DOUBLE	DOUBLE
 
-query R
-select rapidfuzz_prefix_similarity('prefix', 'pretext');
+#
+# NULL handling
+#
+
+query RRIR
+SELECT rapidfuzz_ratio(NULL, 'a'), rapidfuzz_ratio('a', NULL), rapidfuzz_levenshtein_distance(NULL, NULL),
+       rapidfuzz_jaro_similarity(NULL::VARCHAR, 'a');
 ----
-3
+NULL	NULL	NULL	NULL
 
-query R
-select rapidfuzz_prefix_normalized_distance('prefix', 'pretext');
+statement ok
+CREATE TABLE strings AS SELECT * FROM (VALUES ('kitten', 'sitting'), (NULL, 'sitting'), ('kitten', NULL), ('', '')) t(a, b);
+
+query IIR
+SELECT rapidfuzz_levenshtein_distance(a, b), rapidfuzz_levenshtein_distance(a, 'sitting'), rapidfuzz_ratio('kitten', b)
+FROM strings;
 ----
-0.5714285714285714
-
-query R
-select rapidfuzz_prefix_normalized_similarity('prefix', 'pretext');
-----
-0.4285714285714286
-
-# Postfix function tests
-query R
-select rapidfuzz_postfix_distance('postfix', 'pretext');
-----
-7
-
-query R
-select rapidfuzz_postfix_similarity('postfix', 'pretext');
-----
-0
-
-query R
-select rapidfuzz_postfix_normalized_distance('postfix', 'pretext');
-----
-1
-
-query R
-select rapidfuzz_postfix_normalized_similarity('postfix', 'pretext');
-----
-0
-
-# LCS_seq function tests
-query R
-select rapidfuzz_lcs_seq_distance('postfix', 'pretext');
-----
-4
-
-query R
-select rapidfuzz_lcs_seq_similarity('postfix', 'pretext');
-----
-3
-
-query R
-select rapidfuzz_lcs_seq_normalized_distance('postfix', 'pretext');
-----
-0.5714285714285714
-
-query R
-select rapidfuzz_lcs_seq_normalized_similarity('postfix', 'pretext');
-----
-0.4285714285714286
-
-# OSA function tests
-query R
-select rapidfuzz_osa_distance('postfix', 'pretext');
-----
-5
-
-query R
-select rapidfuzz_osa_similarity('postfix', 'pretext');
-----
-2
-
-query R
-select rapidfuzz_osa_normalized_distance('postfix', 'pretext');
-----
-0.7142857142857143
-
-query R
-select rapidfuzz_osa_normalized_similarity('postfix', 'pretext');
-----
-0.2857142857142857
-
+3	3	61.53846153846154
+NULL	NULL	61.53846153846154
+NULL	3	NULL
+0	7	0.0

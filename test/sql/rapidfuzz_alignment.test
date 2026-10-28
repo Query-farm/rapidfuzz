@@ -1,0 +1,71 @@
+# name: test/sql/rapidfuzz_alignment.test
+# description: Edit operations, opcodes and partial ratio alignment
+# group: [sql]
+
+require rapidfuzz
+
+query T
+SELECT rapidfuzz_levenshtein_editops('kitten', 'sitting');
+----
+[{'operation': replace, 's1_pos': 0, 's2_pos': 0}, {'operation': replace, 's1_pos': 4, 's2_pos': 4}, {'operation': insert, 's1_pos': 6, 's2_pos': 6}]
+
+query T
+SELECT rapidfuzz_levenshtein_opcodes('kitten', 'sitting');
+----
+[{'operation': replace, 's1_start': 0, 's1_end': 1, 's2_start': 0, 's2_end': 1}, {'operation': equal, 's1_start': 1, 's1_end': 4, 's2_start': 1, 's2_end': 4}, {'operation': replace, 's1_start': 4, 's1_end': 5, 's2_start': 4, 's2_end': 5}, {'operation': equal, 's1_start': 5, 's1_end': 6, 's2_start': 5, 's2_end': 6}, {'operation': insert, 's1_start': 6, 's1_end': 6, 's2_start': 6, 's2_end': 7}]
+
+query T
+SELECT rapidfuzz_indel_editops('kitten', 'sitting');
+----
+[{'operation': insert, 's1_pos': 0, 's2_pos': 0}, {'operation': delete, 's1_pos': 0, 's2_pos': 1}, {'operation': insert, 's1_pos': 4, 's2_pos': 4}, {'operation': delete, 's1_pos': 4, 's2_pos': 5}, {'operation': insert, 's1_pos': 6, 's2_pos': 6}]
+
+query T
+SELECT rapidfuzz_indel_opcodes('kitten', 'sitting');
+----
+[{'operation': insert, 's1_start': 0, 's1_end': 0, 's2_start': 0, 's2_end': 1}, {'operation': delete, 's1_start': 0, 's1_end': 1, 's2_start': 1, 's2_end': 1}, {'operation': equal, 's1_start': 1, 's1_end': 4, 's2_start': 1, 's2_end': 4}, {'operation': insert, 's1_start': 4, 's1_end': 4, 's2_start': 4, 's2_end': 5}, {'operation': delete, 's1_start': 4, 's1_end': 5, 's2_start': 5, 's2_end': 5}, {'operation': equal, 's1_start': 5, 's1_end': 6, 's2_start': 5, 's2_end': 6}, {'operation': insert, 's1_start': 6, 's1_end': 6, 's2_start': 6, 's2_end': 7}]
+
+query T
+SELECT rapidfuzz_partial_ratio_alignment('a certain string', 'cetain');
+----
+{'score': 83.33333333333334, 's1_start': 2, 's1_end': 8, 's2_start': 0, 's2_end': 6}
+
+# positions count characters, not bytes
+query TT
+SELECT rapidfuzz_levenshtein_editops('café', 'cafe'), rapidfuzz_levenshtein_editops('日本', '日本語');
+----
+[{'operation': replace, 's1_pos': 3, 's2_pos': 3}]	[{'operation': insert, 's1_pos': 2, 's2_pos': 2}]
+
+query T
+SELECT rapidfuzz_partial_ratio_alignment('東京タワー', '東京');
+----
+{'score': 100.0, 's1_start': 0, 's1_end': 2, 's2_start': 0, 's2_end': 2}
+
+# the alignment locates the matching substring
+query T
+SELECT substr(s1, a.s1_start + 1, a.s1_end - a.s1_start)
+FROM (SELECT 'the quick brown fox' AS s1, rapidfuzz_partial_ratio_alignment(s1, 'quack') AS a);
+----
+quick
+
+query TTTT
+SELECT rapidfuzz_levenshtein_editops('', ''), rapidfuzz_levenshtein_opcodes('', ''), rapidfuzz_partial_ratio_alignment('', ''),
+       rapidfuzz_levenshtein_opcodes('abc', 'abc');
+----
+[]	[]	{'score': 100.0, 's1_start': 0, 's1_end': 0, 's2_start': 0, 's2_end': 0}	[{'operation': equal, 's1_start': 0, 's1_end': 3, 's2_start': 0, 's2_end': 3}]
+
+# edit operations replay s1 into s2: count them per kind over a table
+statement ok
+CREATE TABLE edits AS SELECT * FROM (VALUES ('kitten', 'sitting'), ('flaw', 'lawn'), (NULL, 'x'), ('x', NULL)) t(a, b);
+
+query TTI
+SELECT a, b, len(rapidfuzz_levenshtein_editops(a, b)) = rapidfuzz_levenshtein_distance(a, b) FROM edits ORDER BY a NULLS LAST, b;
+----
+flaw	lawn	1
+kitten	sitting	1
+x	NULL	NULL
+NULL	x	NULL
+
+query TT
+SELECT typeof(rapidfuzz_levenshtein_editops('a', 'b')), typeof(rapidfuzz_partial_ratio_alignment('a', 'b'));
+----
+STRUCT(operation VARCHAR, s1_pos BIGINT, s2_pos BIGINT)[]	STRUCT(score DOUBLE, s1_start BIGINT, s1_end BIGINT, s2_start BIGINT, s2_end BIGINT)

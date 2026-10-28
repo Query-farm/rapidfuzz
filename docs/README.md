@@ -14,6 +14,20 @@
 
 Compare strings with fuzzy matching and edit-distance functions in DuckDB using RapidFuzz.
 
+```sql
+INSTALL rapidfuzz FROM community;
+LOAD rapidfuzz;
+
+SELECT rapidfuzz_wratio('this is a test', 'this is a new test!!!');            -- 85.5
+SELECT rapidfuzz_levenshtein_distance('café', 'cafe');                        -- 1 (scores count characters)
+SELECT rapidfuzz_extract_one('cowboys', ['New York Jets', 'New York Giants', 'Dallas Cowboys']);
+-- {'choice': Dallas Cowboys, 'score': 83.07692307692308, 'choice_index': 3}
+SELECT name FROM customers
+WHERE rapidfuzz_jaro_winkler_similarity(name, 'Jonathan', score_cutoff := 0.9) >= 0.9;
+```
+
+See [CHANGELOG.md](../CHANGELOG.md) for what changed in 2.0, including breaking changes.
+
 ## Documentation
 
 Full documentation, including installation, usage, the function reference, and cookbook examples, is available at:

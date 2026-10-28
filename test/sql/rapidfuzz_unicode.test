@@ -1,0 +1,54 @@
+# name: test/sql/rapidfuzz_unicode.test
+# description: Scores and positions count Unicode characters, not UTF-8 bytes
+# group: [sql]
+
+require rapidfuzz
+
+# 'é' is two bytes but one character: one substitution
+query IIR
+SELECT rapidfuzz_levenshtein_distance('café', 'cafe'), rapidfuzz_levenshtein_similarity('café', 'cafe'),
+       rapidfuzz_levenshtein_normalized_similarity('café', 'cafe');
+----
+1	3	0.75
+
+query III
+SELECT rapidfuzz_hamming_distance('日本語', '日本人'), rapidfuzz_indel_distance('😀🦆', '🦆😀'),
+       rapidfuzz_lcs_seq_similarity('😀a😃b', 'a😀b😃');
+----
+1	2	2
+
+query II
+SELECT rapidfuzz_prefix_similarity('ñandú', 'ñandu'), rapidfuzz_postfix_similarity('crème brûlée', 'brûlée');
+----
+4	6
+
+query R
+SELECT rapidfuzz_jaro_winkler_similarity('Müller', 'Mueller');
+----
+0.8042857142857143
+
+query RRR
+SELECT rapidfuzz_ratio('naïve café', 'naive cafe'), rapidfuzz_partial_ratio('東京タワー', '東京'),
+       rapidfuzz_token_sort_ratio('東京 タワー', 'タワー 東京');
+----
+80.0	100.0	100.0
+
+# with pad := false the lengths are compared in characters
+query I
+SELECT rapidfuzz_hamming_distance('日本語', '日本人', pad := false);
+----
+1
+
+# mixing an ASCII string with a non-ASCII one, in both argument orders and through the cached path
+statement ok
+CREATE TABLE words AS SELECT * FROM (VALUES ('cafe'), ('café'), ('CAFÉ'), ('kaffee'), ('')) t(w);
+
+query TIIR
+SELECT w, rapidfuzz_levenshtein_distance(w, 'café'), rapidfuzz_levenshtein_distance('cafe', w), rapidfuzz_ratio(w, 'café')
+FROM words ORDER BY w;
+----
+(empty)	4	4	0.0
+CAFÉ	4	4	0.0
+cafe	1	0	75.0
+café	0	1	100.0
+kaffee	4	3	40.0

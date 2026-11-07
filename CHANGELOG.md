@@ -57,3 +57,5 @@ WHERE rapidfuzz_levenshtein_distance(name, 'Jonathan', score_cutoff := 2) <= 2;
 - RapidFuzz is pinned to rapidfuzz-cpp 3.3.4 through the overlay port in `vcpkg_ports/rapidfuzz-cpp`, instead of
   following the deprecated `rapidfuzz` vcpkg port. 3.3.4 includes the upstream fixes for `WRatio` at a length ratio of
   exactly 8 and for an out-of-bounds access in edit-operation handling.
+- Tests cover constant, dictionary and sequence input vectors (`test_vector_types`) against flat ones.
+- Removed the DuckDB 1.4 scheduled workflow from the v2.0 branch.

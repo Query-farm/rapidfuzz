@@ -1,0 +1,39 @@
+# name: test/sql/rapidfuzz_vector_types.test
+# description: Constant, dictionary and sequence input vectors score the same as flat ones
+# group: [sql]
+
+require rapidfuzz
+
+# test_vector_types emits the same values as constant, dictionary and flat vectors (plus NULLs)
+statement ok
+CREATE TABLE vt AS SELECT v FROM test_vector_types(NULL::VARCHAR, all_flat := true) t(v);
+
+foreach fn rapidfuzz_ratio rapidfuzz_wratio rapidfuzz_token_set_ratio rapidfuzz_levenshtein_distance rapidfuzz_damerau_levenshtein_normalized_similarity rapidfuzz_hamming_distance rapidfuzz_jaro_winkler_similarity rapidfuzz_prefix_similarity
+
+# against a constant (the cached path)
+query I
+SELECT count(*) FROM (
+	SELECT v, {fn}(v, 'café 日本') AS score FROM test_vector_types(NULL::VARCHAR, all_flat := false) t(v)
+	EXCEPT ALL
+	SELECT v, {fn}(v, 'café 日本') FROM vt
+);
+----
+0
+
+# against itself (the binary path)
+query I
+SELECT count(*) FROM (
+	SELECT v, {fn}(v, v) AS score FROM test_vector_types(NULL::VARCHAR, all_flat := false) t(v)
+	EXCEPT ALL
+	SELECT v, {fn}(v, v) FROM vt
+);
+----
+0
+
+endloop
+
+# a fallible scorer (hamming without padding) over dictionary vectors still raises its error
+statement error
+SELECT rapidfuzz_hamming_distance(v, 'ab', pad := false) FROM test_vector_types(NULL::VARCHAR, all_flat := false) t(v);
+----
+with pad := false both strings must have the same length

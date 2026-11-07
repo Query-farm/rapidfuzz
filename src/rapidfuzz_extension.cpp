@@ -9,7 +9,7 @@
 
 namespace duckdb {
 
-static constexpr const char *RAPIDFUZZ_VERSION = "2026102801";
+static constexpr const char *RAPIDFUZZ_VERSION = "2026110701";
 
 void RegisterDocumentedFunction(ExtensionLoader &loader, ScalarFunction function, FunctionDocumentation documentation) {
 	CreateScalarFunctionInfo info(std::move(function));
